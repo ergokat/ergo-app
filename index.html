@@ -207,6 +207,9 @@
       <option value="">— Επιλέξτε Έργο —</option>
     </select>
     <button class="btn-new-project" onclick="openNewProjectModal()">+ Νέο Έργο</button>
+    <button class="btn-new-project" onclick="exportData()" title="Εξαγωγή δεδομένων σε αρχείο JSON">📤 Export</button>
+    <button class="btn-new-project" onclick="document.getElementById('importFileInput').click()" title="Εισαγωγή δεδομένων από αρχείο JSON">📥 Import</button>
+    <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(this)">
   </div>
 </div>
 
@@ -396,7 +399,12 @@
       <div class="form-group"><label>Κατηγορία Κόστους</label>
         <select id="py_category"><option>Υλικά</option><option>Εργατικά</option><option>Υπεργολαβίες</option><option>Μηχανήματα / Εξοπλισμός</option><option>Μεταφορά</option><option>Γενικά Έξοδα</option><option>Αμοιβές Μηχανικών</option><option>Άλλο</option></select>
       </div>
-      <div class="form-group"><label>Φάση Έργου</label><input id="py_phase" placeholder="π.χ. Θεμέλια, Σκελετός..."></div>
+      <div class="form-group">
+        <label>Φάση Έργου</label>
+        <input id="py_phase" list="phaseList_py" placeholder="Επιλέξτε ή πληκτρολογήστε φάση..." autocomplete="off"
+          onfocus="populatePhaseList('phaseList_py', (activeProject()||currentProject()||{}).id)" onclick="populatePhaseList('phaseList_py', (activeProject()||currentProject()||{}).id)">
+        <datalist id="phaseList_py"></datalist>
+      </div>
     </div>
 
     <!-- Κατάσταση & Τιμολόγιο -->
@@ -424,7 +432,12 @@
       <div class="form-group"><label>Κατηγορία</label>
         <select id="bl_category"><option>Υλικά</option><option>Εργατικά</option><option>Υπεργολαβίες</option><option>Μηχανήματα</option><option>Γενικά Έξοδα</option><option>Αμοιβές Μηχανικών</option><option>Άλλο</option></select>
       </div>
-      <div class="form-group"><label>Φάση Έργου</label><input id="bl_phase" placeholder="π.χ. Φάση 1 - Θεμέλια"></div>
+      <div class="form-group">
+        <label>Φάση Έργου</label>
+        <input id="bl_phase" list="phaseList_bl" placeholder="Επιλέξτε ή πληκτρολογήστε φάση..." autocomplete="off"
+          onfocus="populatePhaseList('phaseList_bl', (activeProject()||currentProject()||{}).id)" onclick="populatePhaseList('phaseList_bl', (activeProject()||currentProject()||{}).id)">
+        <datalist id="phaseList_bl"></datalist>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>Ποσότητα</label><input type="number" id="bl_qty" placeholder="1" step="0.01" min="0"></div>
@@ -451,7 +464,14 @@
       <div class="form-group"><label>Ημερομηνία *</label><input type="date" id="po_date"></div>
       <div class="form-group"><label>Ημ. Παράδοσης</label><input type="date" id="po_delivery"></div>
     </div>
-    <div class="form-group"><label>Προμηθευτής / Υπεργολάβος</label><input id="po_supplier" placeholder="Επωνυμία"></div>
+    <div class="form-group">
+      <label>🏭 Προμηθευτής / Υπεργολάβος</label>
+      <select id="po_supplier_select" onchange="onPOSupplierSelectChange(this.value)"
+        style="width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:white;color:var(--text);margin-bottom:6px">
+        <option value="">— Επιλέξτε προμηθευτή —</option>
+      </select>
+      <input id="po_supplier" placeholder="ή πληκτρολογήστε χειροκίνητα..." style="display:none">
+    </div>
     <div class="form-row">
       <div class="form-group"><label>Ποσό Σύμβασης (€) *</label><input type="number" id="po_amount" placeholder="0.00" step="0.01"></div>
       <div class="form-group"><label>Κατηγορία</label>
@@ -459,7 +479,12 @@
       </div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label>Φάση Έργου</label><input id="po_phase" placeholder="π.χ. Σκελετός"></div>
+      <div class="form-group">
+        <label>Φάση Έργου</label>
+        <input id="po_phase" list="phaseList_po" placeholder="Επιλέξτε ή πληκτρολογήστε φάση..." autocomplete="off"
+          onfocus="populatePhaseList('phaseList_po', (activeProject()||currentProject()||{}).id)" onclick="populatePhaseList('phaseList_po', (activeProject()||currentProject()||{}).id)">
+        <datalist id="phaseList_po"></datalist>
+      </div>
       <div class="form-group"><label>Κατάσταση</label>
         <select id="po_status"><option value="active">✅ Ενεργή</option><option value="pending">⏳ Εκκρεμεί</option><option value="completed">🏁 Ολοκληρώθηκε</option><option value="cancelled">❌ Ακυρώθηκε</option></select>
       </div>
@@ -490,6 +515,21 @@
         <select id="co_status"><option value="approved">✅ Εγκρίθηκε</option><option value="pending">⏳ Εκκρεμεί Έγκριση</option><option value="rejected">❌ Απορρίφθηκε</option></select>
       </div>
       <div class="form-group"><label>Επίδραση στο Χρόνο (ημέρες)</label><input type="number" id="co_days" placeholder="0" step="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>📌 Φάση WBS (για αυτόματη γραμμή)</label>
+        <input id="co_phase" list="phaseList_co" placeholder="Επιλέξτε φάση..." autocomplete="off"
+          onfocus="populatePhaseList('phaseList_co',(activeProject()||currentProject()||{}).id)"
+          onclick="populatePhaseList('phaseList_co',(activeProject()||currentProject()||{}).id)">
+        <datalist id="phaseList_co"></datalist>
+      </div>
+      <div class="form-group"><label>Κατηγορία Κόστους</label>
+        <select id="co_category">
+          <option>Υλικά</option><option>Εργατικά</option><option>Υπεργολαβίες</option>
+          <option>Μηχανήματα / Εξοπλισμός</option><option>Γενικά Έξοδα</option><option>Άλλο</option>
+        </select>
+      </div>
     </div>
     <div class="form-group"><label>Περιγραφή</label><textarea id="co_desc" placeholder="Λεπτομέρειες αλλαγής..."></textarea></div>
     <div class="form-actions">
@@ -571,6 +611,7 @@
     </div>
     <div class="sup-detail-tabs">
       <button class="sup-detail-tab active" onclick="supDetailTab('overview')" id="sdt-overview">📋 Συνοπτική</button>
+      <button class="sup-detail-tab" onclick="supDetailTab('quotes')" id="sdt-quotes">📄 Προσφορές</button>
       <button class="sup-detail-tab" onclick="supDetailTab('transactions')" id="sdt-transactions">💳 Συναλλαγές</button>
       <button class="sup-detail-tab" onclick="supDetailTab('info')" id="sdt-info">📞 Στοιχεία</button>
     </div>
@@ -598,6 +639,35 @@
 </div>
 
 <script>
+
+// ===== PHASE DROPDOWN HELPER =====
+function populatePhaseList(datalistId, projId) {
+  const dl = document.getElementById(datalistId);
+  if (!dl) return;
+
+  // Get project: use explicit projId if provided, else respect tab filter
+  let proj;
+  if (projId) {
+    proj = appData.projects.find(p=>p.id===projId);
+  } else {
+    proj = activeProject() || currentProject();
+  }
+  if (!proj) return;
+
+  // Collect all unique phases from budgetLines + payments + POs
+  const phases = new Set();
+  (proj.budgetLines||[]).forEach(bl => { if (bl.phase) phases.add(bl.phase); });
+  (proj.payments||[]).forEach(p  => { if (p.phase)  phases.add(p.phase);  });
+  (proj.purchaseOrders||[]).forEach(po => { if (po.phase) phases.add(po.phase); });
+
+  // Budget line phases first (official WBS order), then others alphabetically
+  const budgetPhases = [...new Set((proj.budgetLines||[]).map(bl=>bl.phase).filter(Boolean))];
+  const otherPhases  = [...phases].filter(p => !budgetPhases.includes(p)).sort();
+  const allPhases    = [...budgetPhases, ...otherPhases];
+
+  dl.innerHTML = allPhases.map(ph => `<option value="${ph}">`).join('');
+}
+
 // ===== STATE =====
 let appData = { projects: [], currentProjectId: null };
 let editingReceiptId = null, editingPaymentId = null, editingBudgetLineId = null;
@@ -610,6 +680,14 @@ try { const s = localStorage.getItem('ergokat_v2'); if (s) appData = JSON.parse(
 
 function save() { try { localStorage.setItem('ergokat_v2', JSON.stringify(appData)); } catch(e) {} }
 function currentProject() { return appData.projects.find(p => p.id === appData.currentProjectId); }
+// Returns the project active in the current tab's filter (falls back to currentProject)
+function activeProject() {
+  if (currentTab === 'budget'      && window._budgetFilterProjId)  return appData.projects.find(p=>p.id===window._budgetFilterProjId)  || currentProject();
+  if (currentTab === 'payments'    && window._payFilterProjId)     return appData.projects.find(p=>p.id===window._payFilterProjId)     || currentProject();
+  if (currentTab === 'receipts'    && window._receiptFilterProjId) return appData.projects.find(p=>p.id===window._receiptFilterProjId) || currentProject();
+  if (currentTab === 'procurement' && window._procFilterProjId)    return appData.projects.find(p=>p.id===window._procFilterProjId)    || currentProject();
+  return currentProject();
+}
 function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2,5); }
 function fmt(n) {
   if (n == null || isNaN(n)) return '—';
@@ -978,7 +1056,7 @@ function deletePayment(id) {
 // ===== BUDGET LINES =====
 function openBudgetLineModal(id) {
   editingBudgetLineId = id || null;
-  const proj = currentProject();
+  const proj = activeProject();
   if (id) {
     const bl = proj.budgetLines.find(x=>x.id===id);
     document.getElementById('budgetLineModalTitle').textContent = 'Επεξεργασία Γραμμής';
@@ -1012,7 +1090,7 @@ function updateUnitPriceFromTotal() {
   document.getElementById('bl_unit_price').value = (total/qty).toFixed(2);
 }
 function saveBudgetLine() {
-  const proj = currentProject(); if (!proj) return;
+  const proj = activeProject(); if (!proj) return;
   const desc = document.getElementById('bl_desc').value.trim();
   const total = parseFloat(document.getElementById('bl_total').value);
   if (!desc || isNaN(total) || total < 0) { alert('Συμπληρώστε περιγραφή και ποσό'); return; }
@@ -1023,40 +1101,93 @@ function saveBudgetLine() {
 }
 function deleteBudgetLine(id) {
   if (!confirm('Διαγραφή γραμμής;')) return;
-  currentProject().budgetLines = currentProject().budgetLines.filter(x=>x.id!==id);
+  const _bp = activeProject();
+  _bp.budgetLines = (_bp.budgetLines||[]).filter(x=>x.id!==id);
   save(); renderAll();
 }
 
 // ===== PURCHASE ORDERS =====
+function populatePOSupplierDropdown(selectedName) {
+  const proj = currentProject();
+  const sel  = document.getElementById('po_supplier_select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Επιλέξτε προμηθευτή —</option>';
+  if (proj && proj.suppliers && proj.suppliers.length > 0) {
+    // Group by category
+    const cats = {};
+    proj.suppliers.forEach(s => {
+      if (!cats[s.category]) cats[s.category] = [];
+      cats[s.category].push(s);
+    });
+    Object.keys(cats).sort().forEach(cat => {
+      const grp = document.createElement('optgroup');
+      grp.label = cat;
+      cats[cat].forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.name;
+        opt.textContent = s.name + (s.phone ? ' — ' + s.phone : '');
+        if (s.name === selectedName) opt.selected = true;
+        grp.appendChild(opt);
+      });
+      sel.appendChild(grp);
+    });
+  }
+  const mo = document.createElement('option');
+  mo.value = '__manual__';
+  mo.textContent = '✏️ Χειροκίνητη εισαγωγή...';
+  sel.appendChild(mo);
+}
+
+function onPOSupplierSelectChange(val) {
+  const inp = document.getElementById('po_supplier');
+  if (val === '' || val === '__manual__') {
+    inp.style.display = '';
+    if (val === '__manual__') { inp.value = ''; inp.focus(); }
+  } else {
+    inp.style.display = 'none';
+    inp.value = val;
+  }
+}
+
 function openPOModal(id) {
   editingPOId = id || null;
-  const proj = currentProject();
+  const proj = activeProject();
+  populatePOSupplierDropdown('');
+  const _poProj = activeProject();
+  populatePhaseList('phaseList_po', _poProj ? _poProj.id : null);
   if (id) {
     const po = proj.purchaseOrders.find(x=>x.id===id);
     document.getElementById('poModalTitle').textContent = 'Επεξεργασία Εντολής Αγοράς';
-    document.getElementById('po_number').value = po.number||'';
-    document.getElementById('po_date').value = po.date;
+    document.getElementById('po_number').value   = po.number||'';
+    document.getElementById('po_date').value     = po.date;
     document.getElementById('po_delivery').value = po.delivery||'';
-    document.getElementById('po_supplier').value = po.supplier||'';
-    document.getElementById('po_amount').value = po.amount;
+    document.getElementById('po_amount').value   = po.amount;
     document.getElementById('po_category').value = po.category;
-    document.getElementById('po_phase').value = po.phase||'';
-    document.getElementById('po_status').value = po.status;
-    document.getElementById('po_notes').value = po.notes||'';
+    document.getElementById('po_phase').value    = po.phase||'';
+    document.getElementById('po_status').value   = po.status;
+    document.getElementById('po_notes').value    = po.notes||'';
+    // Set supplier dropdown
+    const sel = document.getElementById('po_supplier_select');
+    const inp = document.getElementById('po_supplier');
+    inp.value = po.supplier||'';
+    const matched = [...sel.options].find(o => o.value === (po.supplier||''));
+    if (matched && po.supplier) { sel.value = po.supplier; inp.style.display = 'none'; }
+    else { sel.value = ''; inp.style.display = po.supplier ? '' : 'none'; }
   } else {
     document.getElementById('poModalTitle').textContent = 'Νέα Εντολή Αγοράς';
     ['po_number','po_delivery','po_supplier','po_amount','po_phase','po_notes'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('po_date').value = today();
+    document.getElementById('po_supplier_select').value   = '';
+    document.getElementById('po_supplier').style.display  = 'none';
+    document.getElementById('po_date').value     = today();
     document.getElementById('po_category').value = 'Υλικά';
-    document.getElementById('po_status').value = 'active';
-    // Auto-number
+    document.getElementById('po_status').value   = 'active';
     const num = (proj.purchaseOrders.length+1).toString().padStart(3,'0');
-    document.getElementById('po_number').value = 'ΕΑ-'+new Date().getFullYear()+'-'+num;
+    document.getElementById('po_number').value   = 'ΕΑ-'+new Date().getFullYear()+'-'+num;
   }
   openModal('poModal');
 }
 function savePO() {
-  const proj = currentProject(); if (!proj) return;
+  const proj = activeProject(); if (!proj) return;
   const date = document.getElementById('po_date').value;
   const amount = parseFloat(document.getElementById('po_amount').value);
   if (!date || isNaN(amount) || amount < 0) { alert('Συμπληρώστε ημερομηνία και ποσό'); return; }
@@ -1067,14 +1198,14 @@ function savePO() {
 }
 function deletePO(id) {
   if (!confirm('Διαγραφή εντολής αγοράς;')) return;
-  currentProject().purchaseOrders = currentProject().purchaseOrders.filter(x=>x.id!==id);
+  activeProject().purchaseOrders = currentProject().purchaseOrders.filter(x=>x.id!==id);
   save(); renderAll();
 }
 
 // ===== CHANGE ORDERS =====
 function openCOModal(id) {
   editingCOId = id || null;
-  const proj = currentProject();
+  const proj = activeProject();
   if (id) {
     const co = proj.changeOrders.find(x=>x.id===id);
     document.getElementById('coModalTitle').textContent = 'Επεξεργασία Αλλαγής';
@@ -1086,6 +1217,8 @@ function openCOModal(id) {
     document.getElementById('co_status').value = co.status;
     document.getElementById('co_days').value = co.daysImpact||0;
     document.getElementById('co_desc').value = co.desc||'';
+    document.getElementById('co_phase').value = co.phase||'';
+    document.getElementById('co_category').value = co.category||'Υλικά';
   } else {
     document.getElementById('coModalTitle').textContent = 'Νέα Αλλαγή Έργου';
     ['co_title','co_desc'].forEach(id=>document.getElementById(id).value='');
@@ -1094,24 +1227,90 @@ function openCOModal(id) {
     document.getElementById('co_contract').value = '0';
     document.getElementById('co_days').value = '0';
     document.getElementById('co_status').value = 'pending';
+    document.getElementById('co_phase').value = '';
+    document.getElementById('co_category').value = 'Υλικά';
     const num = (proj.changeOrders.length+1).toString().padStart(3,'0');
     document.getElementById('co_number').value = 'CO-'+num;
+    populatePhaseList('phaseList_co', proj.id);
   }
   openModal('coModal');
 }
 function saveCO() {
-  const proj = currentProject(); if (!proj) return;
+  const proj = activeProject(); if (!proj) return;
   const title = document.getElementById('co_title').value.trim();
-  const date = document.getElementById('co_date').value;
+  const date  = document.getElementById('co_date').value;
   if (!title || !date) { alert('Συμπληρώστε τίτλο και ημερομηνία'); return; }
-  const co = { id: editingCOId||genId(), title, date, number: document.getElementById('co_number').value.trim(), costImpact: parseFloat(document.getElementById('co_cost').value)||0, contractImpact: parseFloat(document.getElementById('co_contract').value)||0, status: document.getElementById('co_status').value, daysImpact: parseInt(document.getElementById('co_days').value)||0, desc: document.getElementById('co_desc').value.trim() };
-  if (editingCOId) { const i=proj.changeOrders.findIndex(x=>x.id===editingCOId); proj.changeOrders[i]=co; }
-  else proj.changeOrders.push(co);
+
+  const costImpact     = parseFloat(document.getElementById('co_cost').value)||0;
+  const contractImpact = parseFloat(document.getElementById('co_contract').value)||0;
+  const phase          = document.getElementById('co_phase').value.trim();
+  const category       = document.getElementById('co_category').value;
+  const coNumber       = document.getElementById('co_number').value.trim();
+
+  const co = {
+    id: editingCOId||genId(), title, date,
+    number: coNumber, costImpact, contractImpact,
+    status: document.getElementById('co_status').value,
+    daysImpact: parseInt(document.getElementById('co_days').value)||0,
+    desc: document.getElementById('co_desc').value.trim(),
+    phase, category,
+    wbsLineId: editingCOId
+      ? (proj.changeOrders.find(x=>x.id===editingCOId)||{}).wbsLineId || null
+      : null
+  };
+
+  if (editingCOId) {
+    const i = proj.changeOrders.findIndex(x=>x.id===editingCOId);
+    proj.changeOrders[i] = co;
+    // Update existing WBS line if it exists
+    if (co.wbsLineId) {
+      const bi = proj.budgetLines.findIndex(x=>x.id===co.wbsLineId);
+      if (bi >= 0) {
+        proj.budgetLines[bi].desc      = '🔄 ' + coNumber + ': ' + title;
+        proj.budgetLines[bi].total     = costImpact;
+        proj.budgetLines[bi].unitPrice = costImpact;
+        proj.budgetLines[bi].phase     = phase||proj.budgetLines[bi].phase;
+        proj.budgetLines[bi].category  = category;
+        proj.budgetLines[bi].isCO      = true;
+      }
+    }
+  } else {
+    // Auto-create WBS line if cost > 0 and approved
+    if (costImpact !== 0 && co.status === 'approved') {
+      const wbsLine = {
+        id:        genId(),
+        wbs:       coNumber,
+        desc:      '🔄 ' + coNumber + ': ' + title,
+        category:  category,
+        phase:     phase || 'Change Orders',
+        qty:       1,
+        unit:      'τεμ',
+        unitPrice: costImpact,
+        total:     costImpact,
+        notes:     'Αυτόματη γραμμή από Change Order',
+        isCO:      true,
+        coId:      co.id
+      };
+      proj.budgetLines.push(wbsLine);
+      co.wbsLineId = wbsLine.id;
+    }
+    proj.changeOrders.push(co);
+  }
+
   save(); closeModal('coModal'); renderAll();
+  if (!editingCOId && costImpact !== 0 && co.status === 'approved') {
+    showToast('✅ Change Order αποθηκεύτηκε & γραμμή WBS δημιουργήθηκε', 'green');
+  }
 }
 function deleteCO(id) {
-  if (!confirm('Διαγραφή αλλαγής έργου;')) return;
-  currentProject().changeOrders = currentProject().changeOrders.filter(x=>x.id!==id);
+  if (!confirm('Διαγραφή αλλαγής έργου; Θα αφαιρεθεί και η αντίστοιχη γραμμή WBS.')) return;
+  const proj = activeProject();
+  const co = proj.changeOrders.find(x=>x.id===id);
+  // Remove linked WBS line if exists
+  if (co && co.wbsLineId) {
+    proj.budgetLines = proj.budgetLines.filter(x=>x.id!==co.wbsLineId);
+  }
+  proj.changeOrders = proj.changeOrders.filter(x=>x.id!==id);
   save(); renderAll();
 }
 
@@ -1223,28 +1422,167 @@ function viewSupplier(id) {
 }
 function supDetailTab(tab) {
   activeSupDetailTab = tab;
-  ['overview','transactions','info'].forEach(t => document.getElementById('sdt-'+t).classList.toggle('active', t===tab));
+  ['overview','quotes','transactions','info'].forEach(t => {
+    const el = document.getElementById('sdt-'+t);
+    if (el) el.classList.toggle('active', t===tab);
+  });
   renderSupDetailContent();
 }
+
+// ===== QUOTES (ΠΡΟΣΦΟΡΕΣ) =====
+let editingQuoteId = null;
+let quoteSupplierName = null;
+
+function openQuoteModal(supplierId, quoteId) {
+  editingQuoteId = quoteId || null;
+  const proj = currentProject();
+  const sup = proj.suppliers.find(x=>x.id===supplierId);
+  quoteSupplierName = sup ? sup.name : null;
+  if (!sup.quotes) sup.quotes = [];
+
+  // Populate project dropdown
+  const sel = document.getElementById('q_project');
+  sel.innerHTML = '<option value="">— Επιλέξτε έργο —</option>';
+  appData.projects.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+  // Pre-select current project
+  sel.value = appData.currentProjectId || '';
+
+  if (quoteId) {
+    const q = sup.quotes.find(x=>x.id===quoteId);
+    document.getElementById('quoteModalTitle').textContent = 'Επεξεργασία Προσφοράς';
+    document.getElementById('q_project').value    = q.projectId || '';
+    document.getElementById('q_title').value      = q.title;
+    document.getElementById('q_date').value       = q.date;
+    document.getElementById('q_valid_until').value= q.validUntil||'';
+    document.getElementById('q_amount').value     = q.amount;
+    document.getElementById('q_category').value   = q.category||'Υλικά';
+    document.getElementById('q_number').value     = q.number||'';
+    document.getElementById('q_status').value     = q.status||'pending';
+    document.getElementById('q_notes').value      = q.notes||'';
+  } else {
+    document.getElementById('quoteModalTitle').textContent = 'Νέα Προσφορά';
+    ['q_title','q_amount','q_valid_until','q_notes'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('q_date').value     = today();
+    document.getElementById('q_category').value = 'Υλικά';
+    document.getElementById('q_status').value   = 'pending';
+    const num = (sup.quotes.length+1).toString().padStart(3,'0');
+    document.getElementById('q_number').value   = 'ΠΡ-'+new Date().getFullYear()+'-'+num;
+  }
+  openModal('quoteModal');
+}
+
+function saveQuote() {
+  const proj = currentProject(); if (!proj) return;
+  const sup = proj.suppliers.find(x=>x.name===quoteSupplierName); if (!sup) return;
+  if (!sup.quotes) sup.quotes = [];
+  const title  = document.getElementById('q_title').value.trim();
+  const amount = parseFloat(document.getElementById('q_amount').value);
+  const date   = document.getElementById('q_date').value;
+  if (!title || isNaN(amount) || amount<=0 || !date) { alert('Συμπληρώστε τίτλο, ημερομηνία και ποσό'); return; }
+  const q = {
+    id: editingQuoteId||genId(),
+    projectId: document.getElementById('q_project').value,
+    title, date,
+    validUntil: document.getElementById('q_valid_until').value,
+    amount,
+    category: document.getElementById('q_category').value,
+    number:   document.getElementById('q_number').value.trim(),
+    status:   document.getElementById('q_status').value,
+    notes:    document.getElementById('q_notes').value.trim()
+  };
+  if (editingQuoteId) { const i=sup.quotes.findIndex(x=>x.id===editingQuoteId); sup.quotes[i]=q; }
+  else sup.quotes.push(q);
+  save(); closeModal('quoteModal'); renderSupDetailContent();
+}
+
+function deleteQuote(supplierId, quoteId) {
+  if (!confirm('Διαγραφή αυτής της προσφοράς;')) return;
+  const proj = currentProject();
+  const sup  = proj.suppliers.find(x=>x.id===supplierId); if (!sup) return;
+  sup.quotes = (sup.quotes||[]).filter(x=>x.id!==quoteId);
+  save(); renderSupDetailContent();
+}
+
+// helper: get paid amount for a supplier+project combo
+function getPaidForSupplierProject(supName, projId) {
+  const p = appData.projects.find(x=>x.id===projId);
+  if (!p) return 0;
+  return p.payments.filter(pay=>pay.supplier===supName&&pay.status==='paid').reduce((s,pay)=>s+pay.amount,0);
+}
+
 function renderSupDetailContent() {
   const proj = currentProject(); const s = proj.suppliers.find(x=>x.id===viewingSupId);
+  if (!s) return;
+  if (!s.quotes) s.quotes = [];
   const pays = proj.payments.filter(p=>p.supplier===s.name).sort((a,b)=>b.date.localeCompare(a.date));
   const st = getSupplierStats(proj, s.name);
   const el = document.getElementById('supplierDetailContent');
+
   if (activeSupDetailTab === 'overview') {
     const mData = {}; pays.filter(p=>p.status==='paid').forEach(p => { const ym=p.date.substr(0,7); mData[ym]=(mData[ym]||0)+p.amount; });
     const mMonths = Object.keys(mData).sort();
+    // Approved quotes total
+    const approvedQ = s.quotes.filter(q=>q.status==='approved');
+    const totalQuoted = approvedQ.reduce((sum,q)=>sum+q.amount,0);
+    const quoteBalance = totalQuoted - st.paid;
     el.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
-        <div style="background:var(--orange-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--orange-text);margin-bottom:3px">Συνολικές</div><div style="font-size:16px;font-weight:800;color:var(--orange-text)">${fmt(st.total)}</div></div>
-        <div style="background:var(--green-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--green-text);margin-bottom:3px">Πληρωθέντα</div><div style="font-size:16px;font-weight:800;color:var(--green-text)">${fmt(st.paid)}</div></div>
-        <div style="background:var(--red-bg);border-radius:10px;padding:12px;text-align:center"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--red-text);margin-bottom:3px">Εκκρεμεί</div><div style="font-size:16px;font-weight:800;color:var(--red-text)">${fmt(st.pending)}</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+        <div style="background:var(--blue-bg);border-radius:10px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--blue-text);margin-bottom:3px">Εγκεκρ. Προσφορές</div><div style="font-size:15px;font-weight:800;color:var(--blue-text)">${fmt(totalQuoted)}</div></div>
+        <div style="background:var(--green-bg);border-radius:10px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--green-text);margin-bottom:3px">Πληρωθέντα</div><div style="font-size:15px;font-weight:800;color:var(--green-text)">${fmt(st.paid)}</div></div>
+        <div style="background:${quoteBalance>0?'var(--orange-bg)':'var(--green-bg)'};border-radius:10px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:${quoteBalance>0?'var(--orange-text)':'var(--green-text)'};margin-bottom:3px">Υπόλοιπο Προσφοράς</div><div style="font-size:15px;font-weight:800;color:${quoteBalance>0?'var(--orange-text)':'var(--green-text)'}">${fmt(quoteBalance)}</div></div>
+        <div style="background:var(--red-bg);border-radius:10px;padding:10px;text-align:center"><div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--red-text);margin-bottom:3px">Εκκρεμείς Πλ.</div><div style="font-size:15px;font-weight:800;color:var(--red-text)">${fmt(st.pending)}</div></div>
       </div>
       ${pays.length===0?'<div class="empty-state"><div class="icon">💳</div><p>Δεν υπάρχουν συναλλαγές</p></div>'
         :`<div class="table-wrap"><table><thead><tr><th>Ημ/νία</th><th>Κατηγορία</th><th>Ποσό</th><th>Παραστατικό</th><th>Κατάσταση</th></tr></thead>
         <tbody>${pays.slice(0,5).map(p=>`<tr><td>${fmtDate(p.date)}</td><td><span class="badge badge-gray">${p.category}</span></td><td class="amount-negative">−${fmt(p.amount)}</td><td style="font-size:11px;color:var(--text2)">${p.invoice||'—'}</td><td>${statusBadge(p.status)}</td></tr>`).join('')}</tbody></table></div>`}
       ${mMonths.length>0?`<div style="margin-top:14px"><div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">Μηνιαίες Πληρωμές</div><canvas id="supChart" height="110"></canvas></div>`:''}`;
     if (mMonths.length>0) { setTimeout(()=>{ const ctx=document.getElementById('supChart'); if(ctx) new Chart(ctx.getContext('2d'),{ type:'bar', data:{ labels:mMonths.map(m=>{const p=m.split('-');return p[1]+'/'+p[0];}), datasets:[{label:'Πληρωμές',data:mMonths.map(m=>mData[m]),backgroundColor:'#6366f180',borderColor:'#6366f1',borderWidth:2,borderRadius:4}]}, options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}}); },50); }
+
+  } else if (activeSupDetailTab === 'quotes') {
+    const quotes = [...s.quotes].sort((a,b)=>b.date.localeCompare(a.date));
+    const qStatusBadge = st => {
+      const m = { pending:'badge-orange', approved:'badge-green', rejected:'badge-red', partial:'badge-blue' };
+      const l = { pending:'Εκκρεμεί', approved:'Εγκρίθηκε', rejected:'Απορρίφθηκε', partial:'Μερική' };
+      return `<span class="badge ${m[st]||'badge-gray'}">${l[st]||st}</span>`;
+    };
+    el.innerHTML = `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button class="btn btn-sm btn-indigo" onclick="openQuoteModal('${s.id}')">+ Νέα Προσφορά</button>
+      </div>
+      ${quotes.length===0
+        ? `<div class="empty-state"><div class="icon">📄</div><p>Δεν υπάρχουν προσφορές ακόμα</p><button class="btn btn-sm btn-indigo" style="margin-top:12px" onclick="openQuoteModal('${s.id}')">+ Προσθήκη Προσφοράς</button></div>`
+        : `<div class="table-wrap"><table>
+            <thead><tr><th>Αρ.</th><th>Ημ/νία</th><th>Έργο</th><th>Περιγραφή</th><th>Ποσό Προσφοράς</th><th>Πληρωθέν</th><th>Υπόλοιπο</th><th>Κατάσταση</th><th></th></tr></thead>
+            <tbody>${quotes.map(q=>{
+              const projName = q.projectId ? (appData.projects.find(p=>p.id===q.projectId)||{name:'—'}).name : '—';
+              const paid = q.projectId ? getPaidForSupplierProject(s.name, q.projectId) : 0;
+              // For per-quote paid we use all payments in that project for this supplier
+              // Better: compare per-quote if only one quote per project, else show project total
+              const quoteRemainder = q.status==='approved' ? q.amount - paid : null;
+              return `<tr>
+                <td style="font-size:11px;color:var(--text2)">${q.number||'—'}</td>
+                <td>${fmtDate(q.date)}</td>
+                <td style="font-size:11px;font-weight:600;color:var(--primary2)">${projName}</td>
+                <td><strong style="font-size:12px">${q.title}</strong>${q.notes?`<br><span style="font-size:10px;color:var(--text3)">${q.notes.substr(0,40)}</span>`:''}</td>
+                <td><strong class="amount-positive">${fmt(q.amount)}</strong></td>
+                <td style="color:var(--red);font-weight:600">${q.status==='approved'?`−${fmt(paid)}`:'—'}</td>
+                <td>${quoteRemainder!==null
+                  ? `<span style="font-weight:700;color:${quoteRemainder>0?'var(--orange)':'var(--green)'}">${fmt(quoteRemainder)} ${quoteRemainder>0?'⏳':'✅'}</span>`
+                  : '—'}</td>
+                <td>${qStatusBadge(q.status)}</td>
+                <td style="white-space:nowrap">
+                  <button class="btn btn-sm btn-primary" onclick="openQuoteModal('${s.id}','${q.id}')" style="margin-right:3px">✏️</button>
+                  <button class="btn btn-sm btn-danger-full" onclick="deleteQuote('${s.id}','${q.id}')">🗑️</button>
+                </td>
+              </tr>`;
+            }).join('')}</tbody>
+          </table></div>`
+      }`;
+
   } else if (activeSupDetailTab === 'transactions') {
     el.innerHTML = pays.length===0 ? '<div class="empty-state"><div class="icon">💳</div><p>Δεν υπάρχουν συναλλαγές</p></div>'
       : `<div class="table-wrap"><table><thead><tr><th>Ημ/νία</th><th>Κατηγορία</th><th>Φάση</th><th>Ποσό</th><th>Παραστατικό</th><th>Κατάσταση</th></tr></thead>
@@ -1325,6 +1663,141 @@ function calcStats(proj) {
   return { totalReceipts, pendingReceipts, totalPayments, pendingPayments, balance, contractProgress, budgetUsed, variance, totalBudget, effectiveBudget, adjustedContract, adjustedBudget, coContractAdj, coCostAdj, totalRetainage, latestProgress, earnedValue, poCommitments, costToComplete, contingencyAmount, contingencyPct, baselineBudget, baselineVariance };
 }
 
+
+// ===== BUDGET TEMPLATE — Προσφορά 3 Τουριστικές Κατοικίες Ελούντα =====
+function loadBudgetTemplate() {
+  const proj = activeProject(); if (!proj) return;
+  if (proj.budgetLines && proj.budgetLines.length > 0) {
+    if (!confirm('Ο προϋπολογισμός έχει ήδη γραμμές. Να προστεθούν οι γραμμές της προσφοράς ΕΠΙΠΛΕΟΝ των υπαρχόντων;')) return;
+  }
+  const lines = [
+    // ── ΦΑΣΗ 1: ΧΩΜΑΤΟΥΡΓΙΚΑ ─────────────────────────────────────────────
+    { wbs:'1.1', desc:'Εκσκαφές γενικές, θεμελίων, πισινών, Η/Μ δικτύων', category:'Υπεργολαβίες', phase:'Φάση 1 - Χωματουργικά', qty:1, unit:'εργολαβία', unitPrice:10000, total:10000 },
+    { wbs:'1.2', desc:'Φορτοεκφορτώσεις και μεταφορές προϊόντων εκσκαφής', category:'Υπεργολαβίες', phase:'Φάση 1 - Χωματουργικά', qty:1, unit:'εργολαβία', unitPrice:8000, total:8000 },
+    { wbs:'1.3', desc:'Επιχώσεις, συμπυκνώσεις, διαμορφώσεις', category:'Υπεργολαβίες', phase:'Φάση 1 - Χωματουργικά', qty:1, unit:'εργολαβία', unitPrice:7000, total:7000 },
+    // ── ΦΑΣΗ 2: ΦΕΡΩΝ ΟΡΓΑΝΙΣΜΟΣ ─────────────────────────────────────────
+    { wbs:'2.1', desc:'Σκυρόδεμα καθαριότητος C12/15 — εξομάλυνση εκσκαφής', category:'Υλικά', phase:'Φάση 2 - Φέρων Οργανισμός', qty:1, unit:'εργολαβία', unitPrice:8000, total:8000 },
+    { wbs:'2.2', desc:'Οπλισμένο σκυρόδεμα C25/30 — θεμελιώσεις, πέδιλα, υποστυλώματα, δοκοί, πλάκες', category:'Υλικά', phase:'Φάση 2 - Φέρων Οργανισμός', qty:1, unit:'εργολαβία', unitPrice:80000, total:80000 },
+    { wbs:'2.3', desc:'Σιδηρός οπλισμός B500C ελληνικής χαλυβουργίας', category:'Υλικά', phase:'Φάση 2 - Φέρων Οργανισμός', qty:1, unit:'εργολαβία', unitPrice:45000, total:45000 },
+    { wbs:'2.4', desc:'Κατασκευή πισινών (3) — monobloc με υπερχείλιση, penetron admix', category:'Υπεργολαβίες', phase:'Φάση 2 - Φέρων Οργανισμός', qty:3, unit:'τεμ', unitPrice:15000, total:45000 },
+    { wbs:'2.5', desc:'Κατασκευή κολώνας ΔΕΗ — τριφασικοί μετρητές', category:'Υπεργολαβίες', phase:'Φάση 2 - Φέρων Οργανισμός', qty:1, unit:'τεμ', unitPrice:5000, total:5000 },
+    { wbs:'2.6', desc:'Εξωτερικά μπαλκόνια, πεζόδρομος (χτενιστό μπετό), πάρκινγκ', category:'Υπεργολαβίες', phase:'Φάση 2 - Φέρων Οργανισμός', qty:1, unit:'εργολαβία', unitPrice:15000, total:15000 },
+    // ── ΦΑΣΗ 3: ΜΟΝΩΣΕΙΣ ─────────────────────────────────────────────────
+    { wbs:'3.1', desc:'Θερμομόνωση & υγρομόνωση ταράτσας — XPS 7cm, Mapelastic Smart, πλακίδιο', category:'Υλικά', phase:'Φάση 3 - Μονώσεις', qty:1, unit:'εργολαβία', unitPrice:10000, total:10000 },
+    { wbs:'3.2', desc:'Μόνωση θεμελίωσης — τσιμεντοειδές, μεμβράνη αυγουλιέρα', category:'Υλικά', phase:'Φάση 3 - Μονώσεις', qty:1, unit:'εργολαβία', unitPrice:5000, total:5000 },
+    { wbs:'3.3', desc:'Μόνωση πισινών — Mapelastic Smart 2 στρώσεις', category:'Υλικά', phase:'Φάση 3 - Μονώσεις', qty:3, unit:'τεμ', unitPrice:1667, total:5000 },
+    // ── ΦΑΣΗ 4: ΤΟΙΧΟΠΟΙΙΕΣ ──────────────────────────────────────────────
+    { wbs:'4.1', desc:'Εξωτερική τοιχοποιία — τουβλίνα 24x25x19', category:'Υλικά', phase:'Φάση 4 - Τοιχοποιίες', qty:1, unit:'εργολαβία', unitPrice:20000, total:20000 },
+    { wbs:'4.2', desc:'Εσωτερική τοιχοποιία βάση σχεδίων', category:'Υλικά', phase:'Φάση 4 - Τοιχοποιίες', qty:1, unit:'εργολαβία', unitPrice:15000, total:15000 },
+    { wbs:'4.3', desc:'Επιχρίσματα 3 στρώσεων εξωτερικά & εσωτερικά, οροφές, στηθαία', category:'Εργατικά', phase:'Φάση 4 - Τοιχοποιίες', qty:1, unit:'εργολαβία', unitPrice:25000, total:25000 },
+    // ── ΦΑΣΗ 5: ΘΕΡΜΟΠΡΟΣΟΨΗ & ΠΕΤΡΑ ────────────────────────────────────
+    { wbs:'5.1', desc:'Θερμοπρόσοψη 7cm 80Kpa — υλικά Mapei, ακρυλικός σοβάς 1.2mm', category:'Υλικά', phase:'Φάση 5 - Θερμοπρόσοψη & Πέτρα', qty:1, unit:'εργολαβία', unitPrice:35000, total:35000 },
+    { wbs:'5.2', desc:'Επένδυση εξωτερικών τοίχων με μαύρη πέτρα ακανόνιστη', category:'Υλικά', phase:'Φάση 5 - Θερμοπρόσοψη & Πέτρα', qty:1, unit:'εργολαβία', unitPrice:50000, total:50000 },
+    { wbs:'5.3', desc:'Τοίχος περίφραξης μεταξύ κατοικιών — μαύρη πέτρα, C16/20 βάση', category:'Υλικά', phase:'Φάση 5 - Θερμοπρόσοψη & Πέτρα', qty:1, unit:'εργολαβία', unitPrice:20000, total:20000 },
+    // ── ΦΑΣΗ 6: ΠΛΑΚΟΣΤΡΩΣΕΙΣ ───────────────────────────────────────────
+    { wbs:'6.1', desc:'Πλακόστρωση εσωτερικών χώρων — έως 25€/m², κόλλα Kerakoll H-30', category:'Υλικά', phase:'Φάση 6 - Πλακοστρώσεις', qty:1, unit:'εργολαβία', unitPrice:15000, total:15000 },
+    { wbs:'6.2', desc:'Πλακόστρωση εξωτερικών χώρων & μπάνιων — Kerakoll H-40', category:'Υλικά', phase:'Φάση 6 - Πλακοστρώσεις', qty:1, unit:'εργολαβία', unitPrice:12000, total:12000 },
+    { wbs:'6.3', desc:'Μάρμαρο κατωκάσια κουφωμάτων — βράτσα αντικέ ή σινάι', category:'Υλικά', phase:'Φάση 6 - Πλακοστρώσεις', qty:1, unit:'εργολαβία', unitPrice:8000, total:8000 },
+    { wbs:'6.4', desc:'Τσιμεντοκονία εσωτερικά & εξωτερικά, σοβατεπί, κυβόλιθοι', category:'Υλικά', phase:'Φάση 6 - Πλακοστρώσεις', qty:1, unit:'εργολαβία', unitPrice:15000, total:15000 },
+    // ── ΦΑΣΗ 7: ΚΟΥΦΩΜΑΤΑ ────────────────────────────────────────────────
+    { wbs:'7.1', desc:'Κουφώματα αλουμινίου Exalco Albio 109C (ανοιγόμενα) & Albio 235 (συρόμενα)', category:'Υλικά', phase:'Φάση 7 - Κουφώματα', qty:1, unit:'εργολαβία', unitPrice:18000, total:18000 },
+    { wbs:'7.2', desc:'Υάλωση 4-16-4 SOLAR, ρολά αλουμινίου, κουνουπιέρες', category:'Υλικά', phase:'Φάση 7 - Κουφώματα', qty:1, unit:'εργολαβία', unitPrice:8000, total:8000 },
+    { wbs:'7.3', desc:'Μεσόπορτες μελαμίνης, πόρτες εισόδου ασφαλείας 8-σημων', category:'Υλικά', phase:'Φάση 7 - Κουφώματα', qty:1, unit:'εργολαβία', unitPrice:4000, total:4000 },
+    // ── ΦΑΣΗ 8: Η/Μ ΕΓΚΑΤΑΣΤΑΣΕΙΣ ────────────────────────────────────────
+    { wbs:'8.1', desc:'Ψύξη-Θέρμανση — αντλία θερμότητας Gree Versati 12KW monobloc (x2), fan coil', category:'Υπεργολαβίες', phase:'Φάση 8 - Η/Μ Εγκαταστάσεις', qty:2, unit:'τεμ', unitPrice:8000, total:16000 },
+    { wbs:'8.2', desc:'Ηλιακοί θερμοσίφωνες — 350L (1τεμ), 160L (1τεμ), 120L (1τεμ)', category:'Υλικά', phase:'Φάση 8 - Η/Μ Εγκαταστάσεις', qty:3, unit:'τεμ', unitPrice:2667, total:8000 },
+    { wbs:'8.3', desc:'Πετσετοκρεμάστρες Termoline, δοχείο αδράνειας 100L', category:'Υλικά', phase:'Φάση 8 - Η/Μ Εγκαταστάσεις', qty:1, unit:'εργολαβία', unitPrice:15000, total:15000 },
+    { wbs:'8.4', desc:'Ηλεκτρολογική εγκατάσταση πλήρης — πίνακες Hager, γείωση, κυκλώματα', category:'Υπεργολαβίες', phase:'Φάση 8 - Η/Μ Εγκαταστάσεις', qty:1, unit:'εργολαβία', unitPrice:25000, total:25000 },
+    { wbs:'8.5', desc:'Αναμονές φωτοβολταϊκών, φορτιστών EV, καρτοδιακόπτης, επίγεια/δορυφορική λήψη', category:'Υπεργολαβίες', phase:'Φάση 8 - Η/Μ Εγκαταστάσεις', qty:1, unit:'εργολαβία', unitPrice:14000, total:14000 },
+    { wbs:'8.6', desc:'Υδραυλική εγκατάσταση πλήρης — ύδρευση, αποχέτευση, πισίνες, ντεπόζιτα', category:'Υπεργολαβίες', phase:'Φάση 8 - Η/Μ Εγκαταστάσεις', qty:1, unit:'εργολαβία', unitPrice:43000, total:43000 },
+    // ── ΦΑΣΗ 9: ΤΕΛΕΙΩΜΑΤΑ ───────────────────────────────────────────────
+    { wbs:'9.1', desc:'Ελαιοχρωματισμοί — πλαστικά ακρυλικά χρώματα Vitex (κτίρια 1 & 2)', category:'Εργατικά', phase:'Φάση 9 - Τελειώματα', qty:1, unit:'εργολαβία', unitPrice:14000, total:14000 },
+    { wbs:'9.2', desc:'Ξυλουργικά — κουζίνες μελαμίνης, ντουλάπες, πέργκολα σουηδικό ξύλο', category:'Υλικά', phase:'Φάση 9 - Τελειώματα', qty:1, unit:'εργολαβία', unitPrice:18000, total:18000 },
+    { wbs:'9.3', desc:'Έπιπλα μπάνιου — κόντρα πλακέ θαλάσσης βαμμένο', category:'Υλικά', phase:'Φάση 9 - Τελειώματα', qty:1, unit:'εργολαβία', unitPrice:7000, total:7000 },
+    { wbs:'9.4', desc:'Είδη υγιεινής — λεκάνες x8, νιπτήρες x8, ντουζιέρες, αξεσουάρ x8', category:'Υλικά', phase:'Φάση 9 - Τελειώματα', qty:1, unit:'εργολαβία', unitPrice:9000, total:9000 },
+  ];
+
+  const totalCheck = lines.reduce((s,l)=>s+l.total,0);
+  if (!confirm(
+    `Φόρτωση ${lines.length} γραμμών WBS από την προσφορά:\n` +
+    `"3 Τουριστικές Κατοικίες Ελούντα" (ΕΡΓΟΚΑΤ ΙΚΕ)\n\n` +
+    `Σύνολο: ${new Intl.NumberFormat("el-GR",{style:"currency",currency:"EUR"}).format(totalCheck)}\n` +
+    `(Αρχική προσφορά: 657.000,00 €)\n\n` +
+    `Να προχωρήσω;`
+  )) return;
+
+  lines.forEach(l => {
+    proj.budgetLines.push({ id: genId(), ...l, notes:'' });
+  });
+  save();
+  showToast('✅ ' + lines.length + ' γραμμές WBS φορτώθηκαν επιτυχώς!', 'green');
+  renderAll();
+}
+
+
+// ===== BUDGET BULK SELECT =====
+let _budgetSelectMode = false;
+
+function toggleBudgetSelectMode() {
+  _budgetSelectMode = !_budgetSelectMode;
+  const bar = document.getElementById('budgetBulkBar');
+  if (bar) bar.style.display = _budgetSelectMode ? 'flex' : 'none';
+  // Show/hide checkbox columns
+  document.querySelectorAll('#bsel-th, .bsel-td').forEach(el => {
+    el.style.display = _budgetSelectMode ? '' : 'none';
+  });
+  if (!_budgetSelectMode) {
+    // uncheck all
+    document.querySelectorAll('.bsel-cb').forEach(cb => cb.checked = false);
+    updateBudgetSelectCount();
+  }
+}
+
+function updateBudgetSelectCount() {
+  const count = document.querySelectorAll('.bsel-cb:checked').length;
+  const el = document.getElementById('budgetSelectCount');
+  if (el) el.textContent = count + ' επιλεγμένα';
+}
+
+function selectAllBudgetLines() {
+  document.querySelectorAll('.bsel-cb').forEach(cb => cb.checked = true);
+  updateBudgetSelectCount();
+}
+
+function deselectAllBudgetLines() {
+  document.querySelectorAll('.bsel-cb').forEach(cb => cb.checked = false);
+  updateBudgetSelectCount();
+}
+
+function toggleAllPhaseLines(masterCb, ph) {
+  // Check all checkboxes in this phase's table
+  const checked = masterCb.checked;
+  masterCb.closest('table').querySelectorAll('.bsel-cb').forEach(cb => cb.checked = checked);
+  updateBudgetSelectCount();
+}
+
+function deleteSelectedBudgetLines() {
+  const selected = [...document.querySelectorAll('.bsel-cb:checked')].map(cb => cb.dataset.id);
+  if (selected.length === 0) { alert('Δεν έχετε επιλέξει γραμμές.'); return; }
+  if (!confirm(`Διαγραφή ${selected.length} επιλεγμένων γραμμών;`)) return;
+  const proj = activeProject(); if (!proj) return;
+  proj.budgetLines = proj.budgetLines.filter(bl => !selected.includes(bl.id));
+  _budgetSelectMode = false;
+  save(); renderAll();
+  showToast('🗑️ ' + selected.length + ' γραμμές διαγράφηκαν', 'orange');
+}
+
+function deleteAllBudgetLines() {
+  const proj = activeProject(); if (!proj) return;
+  const count = proj.budgetLines.length;
+  if (count === 0) return;
+  if (!confirm(`Διαγραφή ΟΛΩΝ των ${count} γραμμών προϋπολογισμού;\n\nΑυτή η ενέργεια δεν αναιρείται.`)) return;
+  proj.budgetLines = [];
+  _budgetSelectMode = false;
+  save(); renderAll();
+  showToast('🗑️ Όλες οι γραμμές διαγράφηκαν', 'orange');
+}
+
 // ===== BASELINE =====
 function lockBaseline() {
   const proj = currentProject(); if (!proj) return;
@@ -1382,34 +1855,74 @@ function renderProjects() {
 
   const viewProj = projects.find(p => p.id === selectedProjectViewId);
 
-  // Build project selector cards row
-  const selectorHTML = projects.length === 0
-    ? `<div class="empty-state"><div class="icon">🏗️</div><p>Δεν υπάρχουν έργα ακόμα</p><button class="btn btn-primary" style="margin-top:14px" onclick="openNewProjectModal()">+ Δημιουργία Έργου</button></div>`
-    : `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px">
-        ${projects.map(p => {
-          const st = calcStats(p);
-          const isActive = p.id === selectedProjectViewId;
-          const balColor = st.balance >= 0 ? 'var(--green)' : 'var(--red)';
-          return `<div style="position:relative;background:white;border-radius:12px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.08);border:2px solid ${isActive?'var(--primary2)':'transparent'};min-width:200px;flex:1;transition:all 0.2s;${isActive?'background:#f0f7ff':''}">
-            <!-- action buttons top-right -->
-            <div style="position:absolute;top:8px;right:8px;display:flex;gap:4px" onclick="event.stopPropagation()">
-              <button title="Επεξεργασία" onclick="editProject('${p.id}')" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;line-height:1">✏️</button>
-              <button title="Διαγραφή" onclick="deleteProject('${p.id}')" style="background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;line-height:1">🗑️</button>
-            </div>
-            <!-- clickable body -->
-            <div onclick="selectedProjectViewId='${p.id}';renderAll()" style="cursor:pointer;padding-right:60px">
-              <div style="font-weight:700;font-size:13px;color:${isActive?'var(--primary2)':'var(--text)'};margin-bottom:4px">🏗️ ${p.name}</div>
-              <div style="font-size:11px;color:var(--text2)">${p.client||'—'} · ${p.location||'—'}</div>
-              <div style="display:flex;gap:12px;margin-top:8px">
-                <span style="font-size:11px;font-weight:700;color:var(--green)">↑ ${fmt(st.totalReceipts)}</span>
-                <span style="font-size:11px;font-weight:700;color:var(--red)">↓ ${fmt(st.totalPayments)}</span>
-                <span style="font-size:11px;font-weight:700;color:${balColor}">${fmt(st.balance)}</span>
+  // Build compact project list with search
+  const searchTerm = (window._projectSearch||'').toLowerCase();
+  const filteredProjects = projects.filter(p =>
+    p.name.toLowerCase().includes(searchTerm) ||
+    (p.client||'').toLowerCase().includes(searchTerm) ||
+    (p.location||'').toLowerCase().includes(searchTerm)
+  );
+
+  const selectorHTML = `<div style="background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);margin-bottom:18px;overflow:hidden">
+    <!-- Header bar -->
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap">🏗️ Έργα (${projects.length})</span>
+      <div style="position:relative;flex:1;min-width:160px">
+        <input
+          id="projectSearchInput"
+          placeholder="🔍 Αναζήτηση έργου..."
+          value="${window._projectSearch||''}"
+          oninput="window._projectSearch=this.value;renderAll()"
+          style="width:100%;padding:6px 10px 6px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;background:var(--surface2);color:var(--text)">
+        ${searchTerm?`<button onclick="window._projectSearch='';renderAll()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1">×</button>`:''}
+      </div>
+      <button onclick="openNewProjectModal()" class="btn btn-sm btn-primary" style="white-space:nowrap">+ Νέο Έργο</button>
+    </div>
+    <!-- Compact project rows -->
+    ${projects.length===0
+      ? `<div class="empty-state" style="padding:30px"><div class="icon" style="font-size:28px">🏗️</div><p>Δεν υπάρχουν έργα ακόμα</p></div>`
+      : filteredProjects.length===0
+        ? `<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Δεν βρέθηκαν έργα για "<strong>${searchTerm}</strong>"</div>`
+        : filteredProjects.map(p => {
+            const st = calcStats(p);
+            const isActive = p.id === selectedProjectViewId;
+            const balColor = st.balance >= 0 ? 'var(--green)' : 'var(--red)';
+            const progress = st.adjustedContract > 0 ? Math.min(st.totalReceipts/st.adjustedContract*100,100) : 0;
+            return `<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid #f8fafc;cursor:pointer;background:${isActive?'#f0f7ff':'white'};transition:background 0.15s" onmouseover="if(!${isActive})this.style.background='#f8fafc'" onmouseout="this.style.background='${isActive?'#f0f7ff':'white'}'" onclick="selectedProjectViewId='${p.id}';renderAll()">
+              <!-- Color dot -->
+              <div style="width:8px;height:8px;border-radius:50%;background:${isActive?'var(--primary2)':'var(--border)'};flex-shrink:0"></div>
+              <!-- Name & client -->
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:700;color:${isActive?'var(--primary2)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
+                <div style="font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.client||''}${p.client&&p.location?' · ':''}${p.location||''}</div>
               </div>
-            </div>
-          </div>`;
-        }).join('')}
-        <div onclick="openNewProjectModal()" style="cursor:pointer;background:var(--surface2);border-radius:12px;padding:14px 18px;border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;min-width:120px;color:var(--text3);font-size:13px;font-weight:600;transition:all 0.2s" onmouseover="this.style.background='#e0f0ff'" onmouseout="this.style.background='var(--surface2)'">+ Νέο Έργο</div>
-      </div>`;
+              <!-- Progress bar -->
+              <div style="width:60px;flex-shrink:0">
+                <div style="background:var(--border);border-radius:99px;height:5px;overflow:hidden">
+                  <div style="height:100%;border-radius:99px;background:${progress>=100?'var(--green)':'var(--primary2)'};width:${progress}%"></div>
+                </div>
+                <div style="font-size:9px;color:var(--text3);text-align:center;margin-top:2px">${progress.toFixed(0)}%</div>
+              </div>
+              <!-- Financials -->
+              <div style="display:flex;gap:8px;flex-shrink:0">
+                <div style="text-align:right">
+                  <div style="font-size:10px;color:var(--green);font-weight:700">${fmt(st.totalReceipts)}</div>
+                  <div style="font-size:10px;color:var(--red);font-weight:700">${fmt(st.totalPayments)}</div>
+                </div>
+                <div style="text-align:right;min-width:70px">
+                  <div style="font-size:11px;font-weight:800;color:${balColor}">${fmt(st.balance)}</div>
+                  <div style="font-size:9px;color:var(--text3)">υπόλοιπο</div>
+                </div>
+              </div>
+              <!-- Actions -->
+              <div style="display:flex;gap:4px;flex-shrink:0" onclick="event.stopPropagation()">
+                <button title="Επεξεργασία" onclick="editProject('${p.id}')" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 6px;cursor:pointer;font-size:11px;line-height:1">✏️</button>
+                <button title="Διαγραφή" onclick="deleteProject('${p.id}')" style="background:#fee2e2;border:1px solid #fca5a5;border-radius:5px;padding:3px 6px;cursor:pointer;font-size:11px;line-height:1">🗑️</button>
+              </div>
+            </div>`;
+          }).join('')
+    }
+  </div>`;
 
   if (!viewProj) {
     document.getElementById('mainContent').innerHTML = selectorHTML;
@@ -1562,6 +2075,129 @@ function renderProjects() {
         }
       </div>
     </div>
+
+    <!-- Προσφορές Προμηθευτών για αυτό το Έργο — waterfall per supplier -->
+    ${(() => {
+      // Same waterfall logic as in renderPayments:
+      // payments per supplier are distributed oldest-quote-first within this project
+      const rows = [];
+      let totalQuoted = 0, totalPaidAll = 0, totalRemAll = 0;
+
+      viewProj.suppliers.forEach(sup => {
+        if (!sup.quotes) return;
+        // Only quotes linked to this project, oldest first
+        const projQuotes = (sup.quotes)
+          .filter(q => q.projectId === viewProj.id && q.status === 'approved')
+          .sort((a,b) => a.date.localeCompare(b.date));
+        if (projQuotes.length === 0) return;
+
+        // Total paid to this supplier IN this project
+        const totalPaidInProj = viewProj.payments
+          .filter(p => p.supplier === sup.name && p.status === 'paid')
+          .reduce((s,p) => s + p.amount, 0);
+
+        const supTotalQuoted = projQuotes.reduce((s,q) => s+q.amount, 0);
+        totalQuoted  += supTotalQuoted;
+        totalPaidAll += totalPaidInProj;
+
+        // Waterfall allocation
+        let remaining = totalPaidInProj;
+        projQuotes.forEach((q, idx) => {
+          const allocated = Math.min(remaining, q.amount);
+          const remainder = q.amount - allocated;
+          remaining = Math.max(0, remaining - q.amount);
+          totalRemAll += remainder;
+
+          const isFirst = idx === 0;
+          const isLast  = idx === projQuotes.length - 1;
+          const surplus = isLast && totalPaidInProj > supTotalQuoted
+            ? totalPaidInProj - supTotalQuoted : 0;
+
+          const remColor = remainder > 0 ? 'var(--orange)' : 'var(--green)';
+          const statusHtml = remainder <= 0
+            ? '<span class="badge badge-green">✅ Εξοφλήθη</span>'
+            : allocated > 0
+              ? '<span class="badge badge-blue">🔄 Μερική</span>'
+              : '<span class="badge badge-orange">⏳ Εκκρεμεί</span>';
+
+          rows.push({
+            sup: sup.name, supId: sup.id,
+            isFirst, isLast,
+            quotesCount: projQuotes.length,
+            title: q.title, number: q.number||'—', date: q.date,
+            amount: q.amount, allocated, remainder, surplus,
+            totalPaidInProj, supTotalQuoted,
+            remColor, statusHtml
+          });
+        });
+      });
+
+      // Also include non-approved quotes (for visibility)
+      const pendingRows = [];
+      viewProj.suppliers.forEach(sup => {
+        if (!sup.quotes) return;
+        sup.quotes
+          .filter(q => q.projectId === viewProj.id && q.status !== 'approved')
+          .forEach(q => pendingRows.push({sup:sup.name, ...q}));
+      });
+
+      if (rows.length === 0 && pendingRows.length === 0) return '';
+
+      const supPaid = {};
+      rows.forEach(r => { supPaid[r.sup] = r.totalPaidInProj; });
+      const uniquePaid = Object.values(supPaid).reduce((s,v)=>s+v, 0);
+
+      return `<div class="panel" style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div class="panel-title" style="margin-bottom:0">📄 Προσφορές Προμηθευτών</div>
+          <div style="display:flex;gap:14px;font-size:12px;flex-wrap:wrap">
+            <span style="color:var(--blue);font-weight:700">Σύνολο Εγκεκρ.: ${fmt(totalQuoted)}</span>
+            <span style="color:var(--red);font-weight:700">Πληρωθέν: ${fmt(uniquePaid)}</span>
+            <span style="color:${totalRemAll>0?'var(--orange)':'var(--green)'};font-weight:700">Συνολικό Υπόλοιπο: ${fmt(totalRemAll)}</span>
+          </div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>Προμηθευτής</th><th>Αρ.</th><th>Περιγραφή</th><th>Ημ/νία</th>
+            <th>Ποσό Προσφ.</th><th>Αποδοθέν</th><th>Υπόλοιπο Προσφ.</th>
+            <th>Σύν. Πληρωθέν</th><th>Συν. Υπόλοιπο</th><th>Κατάσταση</th>
+          </tr></thead>
+          <tbody>
+          ${rows.map(r => `<tr style="background:${r.isFirst&&r.quotesCount>1?'#fafbff':'white'}">
+            <td>${r.isFirst?`<strong>${r.sup}</strong>`:''}</td>
+            <td style="font-size:11px;color:var(--text2)">${r.quotesCount>1?'↳ ':''}${r.number}</td>
+            <td style="font-size:12px">${r.title}</td>
+            <td style="font-size:11px">${fmtDate(r.date)}</td>
+            <td class="amount-positive">${fmt(r.amount)}</td>
+            <td style="color:var(--red);font-weight:600">−${fmt(r.allocated)}</td>
+            <td><strong style="color:${r.remColor}">${fmt(r.remainder)} ${r.remainder<=0?'✅':'⏳'}</strong></td>
+            <td style="font-size:11px;color:var(--text2)">${r.isFirst?fmt(r.totalPaidInProj):''}</td>
+            <td>${r.isFirst?`<strong style="color:${r.totalPaidInProj>=r.supTotalQuoted?'var(--green)':'var(--orange)'}">${fmt(r.supTotalQuoted-r.totalPaidInProj)}</strong>`:''}</td>
+            <td>${r.statusHtml}${r.surplus>0?`<br><span style="font-size:9px;color:var(--red)">+${fmt(r.surplus)} υπέρβαση</span>`:''}</td>
+          </tr>`).join('')}
+          ${rows.length>0&&rows[rows.length-1].quotesCount>1?`
+          <tr style="background:#f0f7ff;border-top:2px solid var(--primary2)">
+            <td colspan="4" style="font-size:11px;font-weight:700;color:var(--primary2);padding:6px 13px">Σύνολο</td>
+            <td class="amount-positive"><strong>${fmt(totalQuoted)}</strong></td>
+            <td style="color:var(--red);font-weight:700">−${fmt(uniquePaid)}</td>
+            <td><strong style="color:${totalRemAll>0?'var(--orange)':'var(--green)'}">${fmt(totalRemAll)}</strong></td>
+            <td><strong>${fmt(uniquePaid)}</strong></td>
+            <td><strong style="color:${totalRemAll>0?'var(--orange)':'var(--green)'}">${fmt(totalRemAll)}</strong></td>
+            <td>${totalRemAll<=0?'<span class="badge badge-green">✅ Εξοφλήθη</span>':'<span class="badge badge-orange">⏳ Εκκρεμεί</span>'}</td>
+          </tr>`:''}
+          ${pendingRows.map(q=>`<tr style="opacity:0.6">
+            <td><strong>${q.sup}</strong></td>
+            <td style="font-size:11px;color:var(--text2)">${q.number||'—'}</td>
+            <td style="font-size:12px">${q.title}</td>
+            <td style="font-size:11px">${fmtDate(q.date)}</td>
+            <td class="amount-positive">${fmt(q.amount)}</td>
+            <td>—</td><td>—</td><td>—</td><td>—</td>
+            <td>${{pending:'<span class="badge badge-orange">Εκκρεμεί</span>',rejected:'<span class="badge badge-red">Απορρίφθηκε</span>',partial:'<span class="badge badge-blue">Μερική</span>'}[q.status]||q.status}</td>
+          </tr>`).join('')}
+          </tbody>
+        </table></div>
+      </div>`;
+    })()}
 
     <!-- Αναλυτικές Πληρωμές -->
     <div class="panel">
@@ -1773,14 +2409,51 @@ function renderRecentTable(proj) {
 }
 
 // ===== BUDGET TAB =====
-function renderBudget(proj) {
-  const totalBudget = proj.budgetLines.reduce((s,bl)=>s+bl.total,0);
-  const totalActuals = proj.payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
-  const contingencyPct = proj.contingencyPct||10;
-  const contingencyAmount = totalBudget * contingencyPct / 100;
-  const budgetWithCont = totalBudget + contingencyAmount;
-  const variance = budgetWithCont - totalActuals;
-  const baselineBudget = proj.baselineData ? proj.baselineData.totalBudget : null;
+function renderBudget(_proj) {
+  // ── project filter ──────────────────────────────────────────────────────
+  let filterProjId = window._budgetFilterProjId !== undefined
+    ? window._budgetFilterProjId
+    : (appData.currentProjectId || '');
+  let proj = filterProjId
+    ? (appData.projects.find(p=>p.id===filterProjId) || _proj)
+    : _proj;
+  if (!proj) { proj = _proj; filterProjId = appData.currentProjectId||''; }
+  ensureArrays(proj);
+
+  const projOptions = appData.projects.map(p=>
+    `<option value="${p.id}" ${p.id===filterProjId?'selected':''}>${p.name}${p.client?' · '+p.client:''}</option>`
+  ).join('');
+
+  const filterBarHTML = `
+    <div class="panel" style="margin-bottom:16px;padding:12px 16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap">🏗️ Φίλτρο Έργου:</span>
+        <select onchange="window._budgetFilterProjId=this.value;renderAll()"
+          style="padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:white;color:var(--text);min-width:220px">
+          ${projOptions}
+        </select>
+        <div style="display:flex;gap:14px;margin-left:4px">
+          <span style="font-size:11px;color:var(--text2)">👤 ${proj.client||'—'}</span>
+          <span style="font-size:11px;color:var(--text2)">📍 ${proj.location||'—'}</span>
+          <span style="font-size:11px;font-weight:700;color:var(--orange)">Συμβόλαιο: ${fmt(proj.contract||0)}</span>
+        </div>
+      </div>
+    </div>`;
+
+  // Use calcStats so Change Orders are included automatically
+  const st = calcStats(proj);
+  const totalBudget     = st.totalBudget;
+  const totalActuals    = st.totalPayments;
+  const contingencyPct  = st.contingencyPct;
+  const contingencyAmount = st.contingencyAmount;
+  const budgetWithCont  = st.adjustedBudget;   // includes contingency + approved COs
+  const variance        = budgetWithCont - totalActuals;
+  const baselineBudget  = proj.baselineData ? proj.baselineData.totalBudget : null;
+
+  // Show CO impact if any approved COs exist
+  const approvedCOs    = proj.changeOrders.filter(co=>co.status==='approved');
+  const coCostAdj      = st.coCostAdj;
+  const coContractAdj  = st.coContractAdj;
 
   // Group by phase
   const phases = {};
@@ -1801,13 +2474,38 @@ function renderBudget(proj) {
   proj.payments.filter(p=>p.status==='paid').forEach(p => { catActual[p.category]=(catActual[p.category]||0)+p.amount; });
   const allCats = [...new Set([...Object.keys(catBudget),...Object.keys(catActual)])];
 
-  document.getElementById('mainContent').innerHTML = `
+  document.getElementById('mainContent').innerHTML = filterBarHTML + `
     <div class="summary-cards">
-      <div class="card blue"><div class="card-label">Βασικός Προϋπολογισμός</div><div class="card-value">${fmt(totalBudget)}</div><div class="card-sub">${proj.budgetLines.length} γραμμές WBS</div></div>
-      <div class="card orange"><div class="card-label">Απρόβλεπτα (${contingencyPct}%)</div><div class="card-value">${fmt(contingencyAmount)}</div><div class="card-sub">Σύνολο με απρόβλεπτα: ${fmt(budgetWithCont)}</div></div>
-      <div class="card red"><div class="card-label">Πραγματικό Κόστος</div><div class="card-value">${fmt(totalActuals)}</div><div class="card-sub">${budgetWithCont>0?(totalActuals/budgetWithCont*100).toFixed(1)+'% του προϋπ.':''}</div></div>
-      <div class="card ${variance>=0?'green':'red'}"><div class="card-label">Απόκλιση</div><div class="card-value" style="color:${variance>=0?'var(--green)':'var(--red)'}">${fmt(variance)}</div><div class="card-sub">${variance>=0?'✅ Εντός':'⚠️ Υπέρβαση!'}</div></div>
-      ${baselineBudget!==null?`<div class="card purple"><div class="card-label">Baseline Προϋπ.</div><div class="card-value">${fmt(baselineBudget)}</div><div class="card-sub ${(totalBudget-baselineBudget)>=0?'':''}">Απόκλ. από Baseline: <strong style="color:${totalBudget>baselineBudget?'var(--red)':'var(--green)'}">${fmt(totalBudget-baselineBudget)}</strong></div></div>`:''}
+      <div class="card blue">
+        <div class="card-label">Βασικός Προϋπολογισμός</div>
+        <div class="card-value">${fmt(totalBudget)}</div>
+        <div class="card-sub">${proj.budgetLines.length} γραμμές WBS</div>
+      </div>
+      <div class="card orange">
+        <div class="card-label">Απρόβλεπτα (${contingencyPct}%)</div>
+        <div class="card-value">${fmt(contingencyAmount)}</div>
+        <div class="card-sub">Σύνολο με απρόβλεπτα: ${fmt(totalBudget+contingencyAmount)}</div>
+      </div>
+      ${coCostAdj!==0?`<div class="card ${coCostAdj>0?'red':'green'}">
+        <div class="card-label">Change Orders (${approvedCOs.length} εγκεκρ.)</div>
+        <div class="card-value" style="color:${coCostAdj>0?'var(--red)':'var(--green)'}">${coCostAdj>0?'+':''}${fmt(coCostAdj)}</div>
+        <div class="card-sub">Αναθ. Προϋπ: ${fmt(budgetWithCont)}</div>
+      </div>`:`<div class="card teal">
+        <div class="card-label">Αναθεωρ. Προϋπολογισμός</div>
+        <div class="card-value">${fmt(budgetWithCont)}</div>
+        <div class="card-sub">Με απρόβλεπτα${coCostAdj!==0?' & COs':''}</div>
+      </div>`}
+      <div class="card red">
+        <div class="card-label">Πραγματικό Κόστος</div>
+        <div class="card-value">${fmt(totalActuals)}</div>
+        <div class="card-sub">${budgetWithCont>0?(totalActuals/budgetWithCont*100).toFixed(1)+'% του αναθ. προϋπ.':''}</div>
+      </div>
+      <div class="card ${variance>=0?'green':'red'}">
+        <div class="card-label">Απόκλιση</div>
+        <div class="card-value" style="color:${variance>=0?'var(--green)':'var(--red)'}">${fmt(variance)}</div>
+        <div class="card-sub">${variance>=0?'✅ Εντός':'⚠️ Υπέρβαση!'}</div>
+      </div>
+      ${baselineBudget!==null?`<div class="card purple"><div class="card-label">Baseline Προϋπ.</div><div class="card-value">${fmt(baselineBudget)}</div><div class="card-sub">Απόκλ.: <strong style="color:${totalBudget>baselineBudget?'var(--red)':'var(--green)'}">${fmt(totalBudget-baselineBudget)}</strong></div></div>`:''}
     </div>
 
     <!-- Baseline & Contingency Controls -->
@@ -1831,7 +2529,22 @@ function renderBudget(proj) {
 
     <div class="section-header">
       <span class="section-title">🗂️ Δομή Εργασιών (WBS) & Αναλυτικός Προϋπολογισμός</span>
-      <button class="btn btn-primary" onclick="openBudgetLineModal()">+ Νέα Γραμμή WBS</button>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm" style="background:#e0f0ff;color:var(--primary2);border:1.5px solid var(--primary2)" onclick="loadBudgetTemplate()">📄 Template</button>
+        ${proj.budgetLines.length>0?`
+        <button class="btn btn-sm" style="background:#fef3c7;color:var(--orange-text);border:1.5px solid var(--orange)" onclick="toggleBudgetSelectMode()">☑️ Επιλογή</button>
+        <button class="btn btn-sm btn-danger-full" onclick="deleteAllBudgetLines()">🗑️ Διαγραφή Όλων</button>`:''}
+        <button class="btn btn-sm btn-primary" onclick="openBudgetLineModal()">+ Νέα Γραμμή</button>
+      </div>
+    </div>
+
+    <!-- Bulk action bar (shown when in select mode) -->
+    <div id="budgetBulkBar" style="display:none;background:var(--orange-bg);border:1.5px solid var(--orange);border-radius:10px;padding:10px 16px;margin-bottom:14px;display:none;align-items:center;gap:12px;flex-wrap:wrap">
+      <span id="budgetSelectCount" style="font-size:12px;font-weight:700;color:var(--orange-text)">0 επιλεγμένα</span>
+      <button class="btn btn-sm" style="background:var(--orange);color:white" onclick="selectAllBudgetLines()">✅ Επιλογή Όλων</button>
+      <button class="btn btn-sm btn-cancel" onclick="deselectAllBudgetLines()">❌ Αποεπιλογή</button>
+      <button class="btn btn-sm btn-danger-full" onclick="deleteSelectedBudgetLines()">🗑️ Διαγραφή Επιλεγμένων</button>
+      <button class="btn btn-sm btn-cancel" onclick="toggleBudgetSelectMode()">✕ Κλείσιμο</button>
     </div>
 
     ${Object.keys(phases).length===0 && proj.budgetLines.length===0 ? `
@@ -1842,31 +2555,81 @@ function renderBudget(proj) {
         const phVar = phBudget - phActual;
         const pct = phBudget > 0 ? Math.min(phActual/phBudget*100,100) : 0;
         const baselinePhase = proj.baselineData ? (proj.baselineData.lines||[]).filter(bl=>(bl.phase||'Χωρίς Φάση')===ph).reduce((s,bl)=>s+bl.total,0) : null;
+
+        // POs for this phase
+        const phasePOs = (proj.purchaseOrders||[]).filter(po=>po.phase===ph && po.status!=='cancelled');
+        const phCommitted = phasePOs.reduce((s,po)=>s+po.amount,0);
+        const phRemaining = phBudget - phCommitted;
+        const pctCommitted = phBudget > 0 ? Math.min(phCommitted/phBudget*100,100) : 0;
+        const pctActual    = phBudget > 0 ? Math.min(phActual/phBudget*100,100) : 0;
+
         return `<div class="budget-phase-card">
           <div class="budget-phase-header">
             <div>
               <div style="font-weight:700;font-size:14px">📌 ${ph}</div>
-              <div style="font-size:12px;color:var(--text2);margin-top:2px">
-                Προϋπ: ${fmt(phBudget)} | Πραγμ: ${fmt(phActual)} | <span class="${phVar>=0?'variance-positive':'variance-negative'}">Απόκλιση: ${fmt(phVar)}</span>
-                ${baselinePhase!==null?` | <span style="color:var(--purple);font-weight:600">Baseline: ${fmt(baselinePhase)}</span>`:''}
+              <div style="font-size:12px;color:var(--text2);margin-top:2px;display:flex;flex-wrap:wrap;gap:10px">
+                <span>Προϋπ: <strong>${fmt(phBudget)}</strong></span>
+                ${phCommitted>0?`<span style="color:var(--teal)">📦 Δεσμ: <strong>${fmt(phCommitted)}</strong></span>`:''}
+                <span>Πραγμ: <strong>${fmt(phActual)}</strong></span>
+                <span class="${phVar>=0?'variance-positive':'variance-negative'}">Απόκλιση: <strong>${fmt(phVar)}</strong></span>
+                ${baselinePhase!==null?`<span style="color:var(--purple)">Baseline: <strong>${fmt(baselinePhase)}</strong></span>`:''}
               </div>
+              ${phCommitted>0?`
+              <!-- Double progress bar: committed (teal) + actual (blue/red) -->
+              <div style="margin-top:8px">
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px">
+                  <span>📦 Δεσμευθέν ${pctCommitted.toFixed(0)}%</span>
+                  <span>✅ Πραγματικό ${pctActual.toFixed(0)}%</span>
+                </div>
+                <div style="background:var(--border);border-radius:99px;height:10px;overflow:hidden;position:relative">
+                  <div style="position:absolute;height:100%;border-radius:99px;background:var(--teal);opacity:0.35;width:${pctCommitted}%"></div>
+                  <div style="position:absolute;height:100%;border-radius:99px;background:${pctActual>=100?'var(--red)':pctActual>=80?'var(--orange)':'var(--blue)'};width:${pctActual}%"></div>
+                </div>
+              </div>`:`
+              <div class="progress-bar" style="height:10px;margin-top:8px"><div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--red)':pct>=80?'var(--orange)':'var(--blue)'}"></div></div>`}
             </div>
             <button class="btn btn-sm btn-primary" onclick="openBudgetLineModal()">+ Γραμμή</button>
           </div>
-          <div class="progress-bar" style="height:10px;margin-bottom:12px"><div class="progress-fill" style="width:${pct}%;background:${pct>=100?'var(--red)':pct>=80?'var(--orange)':'var(--blue)'}"></div></div>
+
+          ${phCommitted>0?`
+          <!-- PO summary for this phase -->
+          <div style="background:#f0fdf9;border:1px solid #99f6e4;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:11px">
+            <strong style="color:var(--teal)">📦 Εντολές Αγοράς σε αυτή τη Φάση:</strong>
+            <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:8px">
+              ${phasePOs.map(po=>`
+                <span style="background:white;border:1px solid #99f6e4;border-radius:6px;padding:3px 8px;color:#0f766e">
+                  ${po.number||'ΕΑ'}: <strong>${po.supplier||'—'}</strong> — ${fmt(po.amount)} ${statusBadge(po.status)}
+                </span>`).join('')}
+            </div>
+            <div style="margin-top:6px;display:flex;gap:16px">
+              <span>Σύνολο Δεσμευθέν: <strong style="color:var(--teal)">${fmt(phCommitted)}</strong></span>
+              <span>Περιθώριο: <strong style="color:${phRemaining>=0?'var(--green)':'var(--red)'}">${fmt(phRemaining)}</strong> ${phRemaining<0?'⚠️ Υπέρβαση προϋπ.!':''}</span>
+            </div>
+          </div>`:''}
+
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Κωδικός WBS</th><th>Περιγραφή</th><th>Κατηγορία</th><th>Ποσότ.</th><th>Τιμή/Μον.</th><th>Προϋπ. Ποσό</th><th></th></tr></thead>
-              <tbody>${phases[ph].lines.map(bl=>`<tr>
-                <td style="font-size:11px;color:var(--primary2);font-weight:700;white-space:nowrap">${bl.wbs||'—'}</td>
-                <td><strong>${bl.desc}</strong>${bl.notes?`<br><span style="font-size:10px;color:var(--text3)">${bl.notes}</span>`:''}</td>
-                <td><span class="badge badge-gray">${bl.category}</span></td>
+              <thead><tr><th id="bsel-th" style="width:32px;display:none"><input type="checkbox" onchange="toggleAllPhaseLines(this,'${ph}')" title="Επιλογή φάσης"></th><th>Κωδικός WBS</th><th>Περιγραφή</th><th>Κατηγορία</th><th>Ποσότ.</th><th>Τιμή/Μον.</th><th>Προϋπ. Ποσό</th><th></th></tr></thead>
+              <tbody>${phases[ph].lines.map(bl=>`<tr style="${bl.isCO?'background:#fff7ed;border-left:3px solid var(--orange);':''}">
+                <td style="width:32px;display:none" class="bsel-td"><input type="checkbox" class="bsel-cb" data-id="${bl.id}" onchange="updateBudgetSelectCount()"></td>
+                <td style="font-size:11px;color:${bl.isCO?'var(--orange)':'var(--primary2)'};font-weight:700;white-space:nowrap">
+                  ${bl.isCO?'🔄 ':''}${bl.wbs||'—'}
+                </td>
+                <td>
+                  <strong style="color:${bl.isCO?'var(--orange-text)':'inherit'}">${bl.desc}</strong>
+                  ${bl.isCO?'<span class="badge badge-orange" style="margin-left:6px;font-size:9px">Change Order</span>':''}
+                  ${bl.notes&&!bl.isCO?`<br><span style="font-size:10px;color:var(--text3)">${bl.notes}</span>`:''}
+                </td>
+                <td><span class="badge ${bl.isCO?'badge-orange':'badge-gray'}">${bl.category}</span></td>
                 <td style="font-size:11px">${bl.qty||1} ${bl.unit||''}</td>
                 <td style="font-size:11px">${fmt(bl.unitPrice)}</td>
-                <td><strong>${fmt(bl.total)}</strong></td>
+                <td><strong style="color:${bl.isCO?(bl.total>=0?'var(--orange)':'var(--green)'):'inherit'}">${bl.isCO&&bl.total>=0?'+':''}${fmt(bl.total)}</strong></td>
                 <td style="white-space:nowrap">
-                  <button class="btn btn-sm btn-primary" onclick="openBudgetLineModal('${bl.id}')" style="margin-right:3px">✏️</button>
-                  <button class="btn btn-sm btn-danger-full" onclick="deleteBudgetLine('${bl.id}')">🗑️</button>
+                  ${bl.isCO
+                    ? `<span style="font-size:10px;color:var(--text3)">αυτόματη</span>`
+                    : `<button class="btn btn-sm btn-primary" onclick="openBudgetLineModal('${bl.id}')" style="margin-right:3px">✏️</button>
+                       <button class="btn btn-sm btn-danger-full" onclick="deleteBudgetLine('${bl.id}')">🗑️</button>`
+                  }
                 </td>
               </tr>`).join('')}</tbody>
             </table>
@@ -1984,48 +2747,298 @@ function deleteReceiptFromProj(rid, projId) {
 }
 
 // ===== PAYMENTS TAB =====
-function renderPayments(proj) {
-  const sorted = [...proj.payments].sort((a,b)=>b.date.localeCompare(a.date));
-  const total = proj.payments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
-  const pending = proj.payments.filter(p=>p.status!=='paid').reduce((s,p)=>s+p.amount,0);
+function renderPayments(_proj) {
+  // ── project filter ──────────────────────────────────────────────────────
+  let filterProjId = window._payFilterProjId !== undefined
+    ? window._payFilterProjId
+    : (appData.currentProjectId || '');
+
+  let displayPayments = [];
+  let sourceProj = null;
+  if (filterProjId) {
+    sourceProj = appData.projects.find(p=>p.id===filterProjId);
+    if (sourceProj) displayPayments = [...(sourceProj.payments||[])];
+  } else {
+    appData.projects.forEach(p => {
+      (p.payments||[]).forEach(pay =>
+        displayPayments.push({...pay, _projName: p.name, _projId: p.id})
+      );
+    });
+  }
+  displayPayments.sort((a,b)=>b.date.localeCompare(a.date));
+
+  // use sourceProj for quote panel; if all-projects, use first with quotes
+  const qProj = sourceProj || (appData.projects.find(p=>(p.suppliers||[]).some(s=>(s.quotes||[]).length>0)));
+
+  const total   = displayPayments.filter(p=>p.status==='paid').reduce((s,p)=>s+p.amount,0);
+  const pending = displayPayments.filter(p=>p.status!=='paid').reduce((s,p)=>s+p.amount,0);
+
+  const projOptions = appData.projects.map(p=>
+    `<option value="${p.id}" ${p.id===filterProjId?'selected':''}>${p.name}${p.client?' · '+p.client:''}</option>`
+  ).join('');
+
+  // ── quote rows with waterfall allocation ─────────────────────────────────
+  // Rules:
+  //  1. Each quote belongs to a specific project (q.projectId).
+  //  2. Only payments made in THAT project are counted against THAT quote.
+  //  3. If a supplier has multiple quotes for the same project, payments
+  //     are distributed waterfall (oldest quote first).
+  //  4. Quotes for different projects are completely independent.
+  const quoteRows = [];
+  if (sourceProj) {
+    (sourceProj.suppliers||[]).forEach(sup => {
+      const approvedQuotes = (sup.quotes||[])
+        .filter(q => q.status === 'approved')
+        .sort((a,b) => a.date.localeCompare(b.date)); // oldest first
+
+      if (approvedQuotes.length === 0) return;
+
+      // Group quotes by projectId
+      const quotesByProject = {};
+      approvedQuotes.forEach(q => {
+        const pid = q.projectId || '__none__';
+        if (!quotesByProject[pid]) quotesByProject[pid] = [];
+        quotesByProject[pid].push(q);
+      });
+
+      // For each project group, do waterfall with payments from THAT project only
+      Object.entries(quotesByProject).forEach(([pid, projQuotes]) => {
+        // Payments to this supplier in this specific project
+        const targetProj = pid === '__none__'
+          ? sourceProj
+          : (appData.projects.find(p => p.id === pid) || sourceProj);
+
+        const totalPaidInProject = targetProj.payments
+          .filter(p => p.supplier === sup.name && p.status === 'paid')
+          .reduce((s, p) => s + p.amount, 0);
+
+        const totalQuotedInProject = projQuotes.reduce((s, q) => s + q.amount, 0);
+
+        // Waterfall across quotes within this project
+        let remaining = totalPaidInProject;
+        projQuotes.forEach((q, idx) => {
+          const allocatedToThis = Math.min(remaining, q.amount);
+          const remainder = q.amount - allocatedToThis;
+          remaining = Math.max(0, remaining - q.amount);
+
+          const projName = pid !== '__none__'
+            ? (appData.projects.find(p => p.id === pid) || {name:'—'}).name
+            : '—';
+
+          const isLast = idx === projQuotes.length - 1;
+          const surplus = isLast && totalPaidInProject > totalQuotedInProject
+            ? totalPaidInProject - totalQuotedInProject : 0;
+
+          quoteRows.push({
+            sup:        sup.name,
+            title:      q.title,
+            project:    projName,
+            projectId:  pid,
+            quoted:     q.amount,
+            allocated:  allocatedToThis,
+            remainder:  remainder,
+            surplus:    surplus,
+            totalPaidInProject,
+            totalQuotedInProject,
+            quotesCount: projQuotes.length,
+            quoteIdx:   idx
+          });
+        });
+      });
+    });
+  }
+
+  // Summary per supplier+project combo
+  const supSummary = {};
+  quoteRows.forEach(r => {
+    const key = r.sup + '||' + r.projectId;
+    if (!supSummary[key]) supSummary[key] = {
+      sup: r.sup, project: r.project,
+      quoted: 0, paid: 0, remainder: 0, surplus: 0
+    };
+    supSummary[key].quoted    += r.quoted;
+    supSummary[key].paid       = r.totalPaidInProject;
+    supSummary[key].remainder += r.remainder;
+    supSummary[key].surplus    = r.surplus;
+  });
+
   document.getElementById('mainContent').innerHTML = `
+    <!-- Project filter -->
+    <div class="panel" style="margin-bottom:16px;padding:12px 16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap">🏗️ Φίλτρο Έργου:</span>
+        <select onchange="window._payFilterProjId=this.value;renderAll()"
+          style="padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:white;color:var(--text);min-width:220px">
+          <option value="" ${!filterProjId?'selected':''}>— Όλα τα Έργα —</option>
+          ${projOptions}
+        </select>
+        ${sourceProj?`
+          <div style="display:flex;gap:14px;margin-left:4px">
+            <span style="font-size:11px;color:var(--text2)">👤 ${sourceProj.client||'—'}</span>
+            <span style="font-size:11px;color:var(--text2)">📍 ${sourceProj.location||'—'}</span>
+            <span style="font-size:11px;font-weight:700;color:var(--orange)">Συμβόλαιο: ${fmt(sourceProj.contract||0)}</span>
+          </div>` : ''}
+      </div>
+    </div>
+
     <div class="summary-cards" style="grid-template-columns:repeat(3,1fr)">
       <div class="card red"><div class="card-label">Πληρωθέντα</div><div class="card-value">${fmt(total)}</div></div>
       <div class="card orange"><div class="card-label">Εκκρεμείς</div><div class="card-value">${fmt(pending)}</div></div>
-      <div class="card blue"><div class="card-label">Σύνολο Εγγραφών</div><div class="card-value">${proj.payments.length}</div></div>
+      <div class="card blue"><div class="card-label">Σύνολο Εγγραφών</div><div class="card-value">${displayPayments.length}</div></div>
     </div>
-    <div class="section-header"><span class="section-title">🧾 Πληρωμές προς Προμηθευτές</span><button class="btn btn-primary" onclick="openPaymentModal()">+ Νέα Πληρωμή</button></div>
-    ${sorted.length===0?`<div class="empty-state"><div class="icon">🧾</div><p>Δεν υπάρχουν πληρωμές ακόμα</p><button class="btn btn-primary" style="margin-top:14px" onclick="openPaymentModal()">+ Προσθήκη</button></div>`
-    :`<div class="table-wrap"><table>
-      <thead><tr><th>Ημ/νία</th><th>Προμηθευτής</th><th>Είδος Εργασίας</th><th>Κατηγορία</th><th>Φάση</th><th>Ποσό</th><th>Παραστατικό</th><th>Κατάσταση</th><th></th></tr></thead>
-      <tbody>${sorted.map(p=>`<tr>
-        <td>${fmtDate(p.date)}</td>
-        <td><strong>${p.supplier||'—'}</strong></td>
-        <td style="font-size:11px;color:var(--primary2);font-weight:600">${p.workType||'—'}</td>
-        <td><span class="badge badge-gray">${p.category}</span></td>
-        <td style="font-size:11px;color:var(--text2)">${p.phase||'—'}</td>
-        <td class="amount-negative">−${fmt(p.amount)}</td>
-        <td style="color:var(--text2);font-size:11px">${p.invoice||'—'}</td>
-        <td>${statusBadge(p.status)}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-sm btn-primary" onclick="openPaymentModal('${p.id}')" style="margin-right:3px">✏️</button>
-          <button class="btn btn-sm btn-danger-full" onclick="deletePayment('${p.id}')">🗑️</button>
-        </td>
-      </tr>`).join('')}</tbody>
-    </table></div>`}`;
+
+    <div class="section-header">
+      <span class="section-title">🧾 Πληρωμές${sourceProj?' — '+sourceProj.name:' — Όλα τα Έργα'}</span>
+      <button class="btn btn-primary" onclick="openPaymentModal()">+ Νέα Πληρωμή</button>
+    </div>
+
+    <!-- Quote balance summary with waterfall allocation -->
+    ${quoteRows.length===0 ? '' : `
+    <div class="panel" style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div class="panel-title" style="margin-bottom:0">📄 Υπόλοιπα Εγκεκριμένων Προσφορών</div>
+        <div style="display:flex;gap:14px;font-size:11px;flex-wrap:wrap">
+          <span style="color:var(--blue);font-weight:700">Σύνολο Προσφορών: ${fmt(quoteRows.reduce((s,r)=>s+r.quoted,0))}</span>
+          <span style="color:var(--red);font-weight:700">Πληρωθέν: ${fmt(Object.values(supSummary).reduce((s,v)=>s+v.paid,0))}</span>
+          <span style="color:var(--orange);font-weight:700">Συνολικό Υπόλοιπο: ${fmt(Object.values(supSummary).reduce((s,v)=>s+v.remainder,0))}</span>
+        </div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Προμηθευτής</th>
+          <th>Προσφορά</th>
+          <th>Έργο</th>
+          <th>Ποσό Προσφ.</th>
+          <th>Αποδοθέν σε Προσφορά</th>
+          <th>Υπόλοιπο Προσφ.</th>
+          <th>Σύνολο Πληρωθέν</th>
+          <th>Συνολικό Υπόλοιπο</th>
+          <th>Κατάσταση</th>
+        </tr></thead>
+        <tbody>
+        ${(() => {
+          // Group rows by supplier to show summary row after each group
+          const rows = [];
+          let lastSup = null;
+          quoteRows.forEach((r, i) => {
+            const isNewSup = r.sup !== lastSup;
+            const isLastOfSup = i === quoteRows.length-1 || quoteRows[i+1].sup !== r.sup;
+            lastSup = r.sup;
+
+            // Detail row per quote
+            const remColor = r.remainder > 0 ? 'var(--orange)' : 'var(--green)';
+            const statusBadgeHtml = r.remainder <= 0
+              ? '<span class="badge badge-green">✅ Εξοφλήθη</span>'
+              : r.allocated > 0
+                ? '<span class="badge badge-blue">🔄 Μερική</span>'
+                : '<span class="badge badge-orange">⏳ Εκκρεμεί</span>';
+
+            rows.push(`<tr style="background:${isNewSup&&r.quotesCount>1?'#fafbff':'white'}">
+              <td style="font-size:12px">${isNewSup?`<strong>${r.sup}</strong>`:''}</td>
+              <td style="font-size:11px;color:var(--text2);padding-left:${r.quotesCount>1?'20px':'13px'}">${r.quotesCount>1?'↳ ':''}<strong style="color:var(--text)">${r.title}</strong></td>
+              <td style="font-size:11px;color:var(--primary2)">${r.project}</td>
+              <td class="amount-positive">${fmt(r.quoted)}</td>
+              <td style="color:var(--red);font-weight:600">−${fmt(r.allocated)}</td>
+              <td><strong style="color:${remColor}">${fmt(r.remainder)}</strong></td>
+              <td style="color:var(--text3);font-size:11px">${isNewSup?`${fmt(r.totalPaidInProject)}`:''}</td>
+              <td style="color:var(--text3);font-size:11px">${isNewSup?`<strong style="color:${r.totalPaidInProject>=r.totalQuotedInProject?'var(--green)':'var(--orange)'}">${fmt(r.totalQuotedInProject-r.totalPaidInProject)}</strong>`:''}</td>
+              <td>${statusBadgeHtml}${r.surplus>0?`<br><span style="font-size:9px;color:var(--red)">+${fmt(r.surplus)} υπέρβαση</span>`:''}</td>
+            </tr>`);
+
+            // Summary separator row after last quote of each supplier+project combo (only if multiple quotes)
+            if (isLastOfSup && r.quotesCount > 1) {
+              const smKey = r.sup + '||' + r.projectId;
+              const sm = supSummary[smKey] || {quoted:0,paid:0,remainder:0,surplus:0};
+              rows.push(`<tr style="background:#f0f7ff;border-top:2px solid var(--primary2)">
+                <td colspan="3" style="font-size:11px;font-weight:700;color:var(--primary2);padding:6px 13px">Σύνολο ${r.sup} — ${r.project}</td>
+                <td class="amount-positive"><strong>${fmt(sm.quoted)}</strong></td>
+                <td style="color:var(--red);font-weight:700">−${fmt(sm.paid)}</td>
+                <td><strong style="color:${sm.remainder>0?'var(--orange)':'var(--green)'}">${fmt(sm.remainder)}</strong></td>
+                <td style="font-weight:700">${fmt(sm.paid)}</td>
+                <td><strong style="color:${sm.remainder>0?'var(--orange)':'var(--green)'}">${fmt(sm.remainder)}</strong></td>
+                <td>${sm.remainder<=0?'<span class="badge badge-green">✅ Εξοφλήθη</span>':sm.surplus>0?'<span class="badge badge-red">⚠️ Υπέρβαση</span>':'<span class="badge badge-orange">⏳ Εκκρεμεί</span>'}</td>
+              </tr>`);
+            }
+          });
+          return rows.join('');
+        })()}
+        </tbody>
+      </table></div>
+    </div>`}
+
+    ${displayPayments.length===0
+      ? `<div class="empty-state"><div class="icon">🧾</div><p>Δεν υπάρχουν πληρωμές</p><button class="btn btn-primary" style="margin-top:14px" onclick="openPaymentModal()">+ Προσθήκη</button></div>`
+      : `<div class="table-wrap"><table>
+          <thead><tr>
+            ${!filterProjId?'<th>Έργο</th>':''}
+            <th>Ημ/νία</th><th>Προμηθευτής</th><th>Είδος Εργασίας</th><th>Κατηγορία</th><th>Φάση</th><th>Ποσό</th><th>Παραστατικό</th><th>Κατάσταση</th><th></th>
+          </tr></thead>
+          <tbody>${displayPayments.map(p=>`<tr>
+            ${!filterProjId?`<td style="font-size:11px;font-weight:600;color:var(--primary2)">${p._projName||'—'}</td>`:''}
+            <td>${fmtDate(p.date)}</td>
+            <td><strong>${p.supplier||'—'}</strong></td>
+            <td style="font-size:11px;color:var(--primary2);font-weight:600">${p.workType||'—'}</td>
+            <td><span class="badge badge-gray">${p.category}</span></td>
+            <td style="font-size:11px;color:var(--text2)">${p.phase||'—'}</td>
+            <td class="amount-negative">−${fmt(p.amount)}</td>
+            <td style="color:var(--text2);font-size:11px">${p.invoice||'—'}</td>
+            <td>${statusBadge(p.status)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm btn-primary" onclick="openPaymentModal('${p.id}')" style="margin-right:3px">✏️</button>
+              <button class="btn btn-sm btn-danger-full" onclick="deletePaymentFromProj('${p.id}','${p._projId||filterProjId}')">🗑️</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table></div>`
+    }`;
+}
+
+function deletePaymentFromProj(pid, projId) {
+  if (!confirm('Διαγραφή αυτής της πληρωμής;')) return;
+  const p = appData.projects.find(x=>x.id===projId) || currentProject();
+  if (p) p.payments = p.payments.filter(pay=>pay.id!==pid);
+  save(); renderAll();
 }
 
 // ===== PROCUREMENT TAB =====
-function renderProcurement(proj) {
-  const activePOs = proj.purchaseOrders.filter(po=>po.status!=='cancelled');
-  const totalPO = activePOs.reduce((s,po)=>s+po.amount,0);
-  const activeCOs = proj.changeOrders;
-  const approvedCOs = proj.changeOrders.filter(co=>co.status==='approved');
-  const pendingCOs = proj.changeOrders.filter(co=>co.status==='pending');
-  const coContractAdj = approvedCOs.reduce((s,co)=>s+co.contractImpact,0);
-  const coCostAdj = approvedCOs.reduce((s,co)=>s+co.costImpact,0);
+function renderProcurement(_proj) {
+  // ── project filter ──────────────────────────────────────────────────────
+  let filterProjId = window._procFilterProjId !== undefined
+    ? window._procFilterProjId
+    : (appData.currentProjectId || '');
+  let proj = filterProjId
+    ? (appData.projects.find(p=>p.id===filterProjId) || _proj)
+    : _proj;
+  if (!proj) { proj = _proj; filterProjId = appData.currentProjectId||''; }
+  ensureArrays(proj);
+
+  const projOptions = appData.projects.map(p=>
+    `<option value="${p.id}" ${p.id===filterProjId?'selected':''}>${p.name}${p.client?' · '+p.client:''}</option>`
+  ).join('');
+
+  const activePOs    = proj.purchaseOrders.filter(po=>po.status!=='cancelled');
+  const totalPO      = activePOs.reduce((s,po)=>s+po.amount,0);
+  const approvedCOs  = proj.changeOrders.filter(co=>co.status==='approved');
+  const pendingCOs   = proj.changeOrders.filter(co=>co.status==='pending');
+  const coContractAdj= approvedCOs.reduce((s,co)=>s+co.contractImpact,0);
+  const coCostAdj    = approvedCOs.reduce((s,co)=>s+co.costImpact,0);
 
   document.getElementById('mainContent').innerHTML = `
+    <!-- Project filter -->
+    <div class="panel" style="margin-bottom:16px;padding:12px 16px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap">🏗️ Φίλτρο Έργου:</span>
+        <select onchange="window._procFilterProjId=this.value;renderAll()"
+          style="padding:7px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:white;color:var(--text);min-width:220px">
+          ${projOptions}
+        </select>
+        <div style="display:flex;gap:14px;margin-left:4px">
+          <span style="font-size:11px;color:var(--text2)">👤 ${proj.client||'—'}</span>
+          <span style="font-size:11px;color:var(--text2)">📍 ${proj.location||'—'}</span>
+          <span style="font-size:11px;font-weight:700;color:var(--orange)">Συμβόλαιο: ${fmt(proj.contract||0)}</span>
+        </div>
+      </div>
+    </div>
+
     <div class="summary-cards">
       <div class="card teal"><div class="card-label">Ενεργές Εντολές Αγοράς</div><div class="card-value">${activePOs.length}</div><div class="card-sub">Δέσμευση: ${fmt(totalPO)}</div></div>
       <div class="card orange"><div class="card-label">Εγκεκριμένες Αλλαγές</div><div class="card-value">${approvedCOs.length}</div><div class="card-sub">+${fmt(coContractAdj)} στο συμβόλαιο</div></div>
@@ -2034,51 +3047,53 @@ function renderProcurement(proj) {
     </div>
 
     <div class="section-header" style="margin-top:4px">
-      <span class="section-title">📦 Εντολές Αγοράς (Purchase Orders)</span>
+      <span class="section-title">📦 Εντολές Αγοράς — ${proj.name}</span>
       <button class="btn btn-teal" onclick="openPOModal()">+ Νέα Εντολή</button>
     </div>
 
-    ${proj.purchaseOrders.length===0?`<div class="empty-state"><div class="icon">📦</div><p>Δεν υπάρχουν εντολές αγοράς</p><button class="btn btn-teal" style="margin-top:14px" onclick="openPOModal()">+ Νέα Εντολή Αγοράς</button></div>`
-    :`<div class="table-wrap" style="margin-bottom:24px"><table>
-      <thead><tr><th>Αρ. Εντολής</th><th>Ημ/νία</th><th>Προμηθευτής</th><th>Κατηγορία</th><th>Φάση</th><th>Ποσό Σύμβ.</th><th>Ημ. Παράδοσης</th><th>Κατάσταση</th><th></th></tr></thead>
-      <tbody>${[...proj.purchaseOrders].sort((a,b)=>b.date.localeCompare(a.date)).map(po=>`<tr>
-        <td><strong>${po.number||'—'}</strong></td>
-        <td>${fmtDate(po.date)}</td>
-        <td>${po.supplier||'—'}</td>
-        <td><span class="badge badge-gray">${po.category}</span></td>
-        <td style="font-size:11px;color:var(--text2)">${po.phase||'—'}</td>
-        <td><strong>${fmt(po.amount)}</strong></td>
-        <td>${fmtDate(po.delivery)}</td>
-        <td>${statusBadge(po.status)}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-sm btn-primary" onclick="openPOModal('${po.id}')" style="margin-right:3px">✏️</button>
-          <button class="btn btn-sm btn-danger-full" onclick="deletePO('${po.id}')">🗑️</button>
-        </td>
-      </tr>`).join('')}</tbody>
-    </table></div>`}
+    ${proj.purchaseOrders.length===0
+      ? `<div class="empty-state"><div class="icon">📦</div><p>Δεν υπάρχουν εντολές αγοράς</p><button class="btn btn-teal" style="margin-top:14px" onclick="openPOModal()">+ Νέα Εντολή Αγοράς</button></div>`
+      : `<div class="table-wrap" style="margin-bottom:24px"><table>
+          <thead><tr><th>Αρ. Εντολής</th><th>Ημ/νία</th><th>Προμηθευτής</th><th>Κατηγορία</th><th>Φάση</th><th>Ποσό Σύμβ.</th><th>Ημ. Παράδοσης</th><th>Κατάσταση</th><th></th></tr></thead>
+          <tbody>${[...proj.purchaseOrders].sort((a,b)=>b.date.localeCompare(a.date)).map(po=>`<tr>
+            <td><strong>${po.number||'—'}</strong></td>
+            <td>${fmtDate(po.date)}</td>
+            <td>${po.supplier||'—'}</td>
+            <td><span class="badge badge-gray">${po.category}</span></td>
+            <td style="font-size:11px;color:var(--text2)">${po.phase||'—'}</td>
+            <td><strong>${fmt(po.amount)}</strong></td>
+            <td>${fmtDate(po.delivery)}</td>
+            <td>${statusBadge(po.status)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm btn-primary" onclick="openPOModal('${po.id}')" style="margin-right:3px">✏️</button>
+              <button class="btn btn-sm btn-danger-full" onclick="deletePO('${po.id}')">🗑️</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table></div>`}
 
     <div class="section-header">
-      <span class="section-title">🔄 Αλλαγές Έργου (Change Orders)</span>
+      <span class="section-title">🔄 Αλλαγές Έργου — ${proj.name}</span>
       <button class="btn btn-orange" onclick="openCOModal()">+ Νέα Αλλαγή</button>
     </div>
 
-    ${proj.changeOrders.length===0?`<div class="empty-state"><div class="icon">🔄</div><p>Δεν υπάρχουν εγγεγραμμένες αλλαγές</p><button class="btn btn-orange" style="margin-top:14px" onclick="openCOModal()">+ Νέα Αλλαγή Έργου</button></div>`
-    :`<div class="table-wrap"><table>
-      <thead><tr><th>Αρ.</th><th>Ημ/νία</th><th>Τίτλος</th><th>Επίδραση Κόστους</th><th>Επίδραση Συμβ.</th><th>Επίδρ. Χρόνου</th><th>Κατάσταση</th><th></th></tr></thead>
-      <tbody>${[...proj.changeOrders].sort((a,b)=>b.date.localeCompare(a.date)).map(co=>`<tr>
-        <td style="font-size:11px;color:var(--text2)">${co.number||'—'}</td>
-        <td>${fmtDate(co.date)}</td>
-        <td><strong>${co.title}</strong>${co.desc?`<br><span style="font-size:10px;color:var(--text3)">${co.desc.substr(0,60)}...</span>`:''}</td>
-        <td class="${co.costImpact>=0?'amount-negative':'amount-positive'}">${co.costImpact>=0?'+':''}${fmt(co.costImpact)}</td>
-        <td class="${co.contractImpact>=0?'amount-positive':'amount-negative'}">${co.contractImpact>=0?'+':''}${fmt(co.contractImpact)}</td>
-        <td style="font-size:11px">${co.daysImpact>0?'+'+co.daysImpact+' ημ.':co.daysImpact<0?co.daysImpact+' ημ.':'—'}</td>
-        <td>${statusBadge(co.status)}</td>
-        <td style="white-space:nowrap">
-          <button class="btn btn-sm btn-primary" onclick="openCOModal('${co.id}')" style="margin-right:3px">✏️</button>
-          <button class="btn btn-sm btn-danger-full" onclick="deleteCO('${co.id}')">🗑️</button>
-        </td>
-      </tr>`).join('')}</tbody>
-    </table></div>`}`;
+    ${proj.changeOrders.length===0
+      ? `<div class="empty-state"><div class="icon">🔄</div><p>Δεν υπάρχουν εγγεγραμμένες αλλαγές</p><button class="btn btn-orange" style="margin-top:14px" onclick="openCOModal()">+ Νέα Αλλαγή Έργου</button></div>`
+      : `<div class="table-wrap"><table>
+          <thead><tr><th>Αρ.</th><th>Ημ/νία</th><th>Τίτλος</th><th>Επίδραση Κόστους</th><th>Επίδραση Συμβ.</th><th>Επίδρ. Χρόνου</th><th>Κατάσταση</th><th></th></tr></thead>
+          <tbody>${[...proj.changeOrders].sort((a,b)=>b.date.localeCompare(a.date)).map(co=>`<tr>
+            <td style="font-size:11px;color:var(--text2)">${co.number||'—'}</td>
+            <td>${fmtDate(co.date)}</td>
+            <td><strong>${co.title}</strong>${co.desc?`<br><span style="font-size:10px;color:var(--text3)">${co.desc.substr(0,60)}...</span>`:''}</td>
+            <td class="${co.costImpact>=0?'amount-negative':'amount-positive'}">${co.costImpact>=0?'+':''}${fmt(co.costImpact)}</td>
+            <td class="${co.contractImpact>=0?'amount-positive':'amount-negative'}">${co.contractImpact>=0?'+':''}${fmt(co.contractImpact)}</td>
+            <td style="font-size:11px">${co.daysImpact>0?'+'+co.daysImpact+' ημ.':co.daysImpact<0?co.daysImpact+' ημ.':'—'}</td>
+            <td>${statusBadge(co.status)}</td>
+            <td style="white-space:nowrap">
+              <button class="btn btn-sm btn-primary" onclick="openCOModal('${co.id}')" style="margin-right:3px">✏️</button>
+              <button class="btn btn-sm btn-danger-full" onclick="deleteCO('${co.id}')">🗑️</button>
+            </td>
+          </tr>`).join('')}</tbody>
+        </table></div>`}`;
 }
 
 // ===== BILLING TAB =====
@@ -2418,9 +3433,170 @@ function calNav(dir) {
   renderAll();
 }
 
+
+// ===== EXPORT / IMPORT =====
+function exportData() {
+  try {
+    const dataStr = JSON.stringify(appData, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const now  = new Date();
+    const dateStr = now.getFullYear() + '-' +
+      String(now.getMonth()+1).padStart(2,'0') + '-' +
+      String(now.getDate()).padStart(2,'0');
+    a.href     = url;
+    a.download = 'ergokat-backup-' + dateStr + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✅ Τα δεδομένα εξήχθησαν επιτυχώς!', 'green');
+  } catch(e) {
+    alert('Σφάλμα κατά την εξαγωγή: ' + e.message);
+  }
+}
+
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      // Validate basic structure
+      if (!parsed.projects || !Array.isArray(parsed.projects)) {
+        alert('❌ Μη έγκυρο αρχείο backup. Το αρχείο πρέπει να είναι εξαγωγή από αυτή την εφαρμογή.');
+        input.value = '';
+        return;
+      }
+      const projectCount = parsed.projects.length;
+      const totalPays = parsed.projects.reduce((s,p)=>s+(p.payments||[]).length,0);
+      const totalRecs = parsed.projects.reduce((s,p)=>s+(p.receipts||[]).length,0);
+
+      if (!confirm(
+        `📥 Εισαγωγή δεδομένων:
+
+` +
+        `• ${projectCount} έργα
+` +
+        `• ${totalRecs} εισπράξεις
+` +
+        `• ${totalPays} πληρωμές
+
+` +
+        `⚠️ Τα τρέχοντα δεδομένα θα ΑΝΤΙΚΑΤΑΣΤΑΘΟΥΝ.
+
+` +
+        `Θέλετε να συνεχίσετε;`
+      )) {
+        input.value = '';
+        return;
+      }
+
+      appData = parsed;
+      save();
+      refreshProjectSelect();
+      // Reset to first project if available
+      if (appData.projects.length > 0 && !appData.currentProjectId) {
+        appData.currentProjectId = appData.projects[0].id;
+      }
+      renderAll();
+      input.value = '';
+      showToast('✅ Εισαγωγή επιτυχής! ' + projectCount + ' έργα φορτώθηκαν.', 'green');
+    } catch(err) {
+      alert('❌ Σφάλμα ανάγνωσης αρχείου: ' + err.message);
+      input.value = '';
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ── Toast notification ─────────────────────────────────────────────────────
+function showToast(msg, color) {
+  // Remove existing toast
+  const existing = document.getElementById('appToast');
+  if (existing) existing.remove();
+
+  const colors = {
+    green:  { bg: '#d1fae5', border: '#10b981', text: '#065f46' },
+    red:    { bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
+    blue:   { bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
+    orange: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+  };
+  const c = colors[color] || colors.blue;
+
+  const toast = document.createElement('div');
+  toast.id = 'appToast';
+  toast.style.cssText = `
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: ${c.bg}; border: 2px solid ${c.border}; color: ${c.text};
+    padding: 12px 24px; border-radius: 10px; font-size: 13px; font-weight: 700;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999;
+    animation: toastIn 0.3s ease; white-space: nowrap;
+  `;
+  toast.textContent = msg;
+
+  // Add keyframe if not present
+  if (!document.getElementById('toastStyle')) {
+    const style = document.createElement('style');
+    style.id = 'toastStyle';
+    style.textContent = '@keyframes toastIn { from { opacity:0; transform:translateX(-50%) translateY(20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+    document.head.appendChild(style);
+  }
+
+  document.body.appendChild(toast);
+  setTimeout(() => {
+    toast.style.animation = 'toastIn 0.3s ease reverse';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
 // ===== INIT =====
 refreshProjectSelect();
 renderAll();
 </script>
+
+<!-- Quote Modal -->
+<div class="form-modal-bg" id="quoteModal">
+  <div class="form-modal" style="max-width:520px">
+    <h3>📄 <span id="quoteModalTitle">Νέα Προσφορά</span></h3>
+    <div class="form-group">
+      <label>🏗️ Έργο *</label>
+      <select id="q_project" style="width:100%;padding:8px 11px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:white;color:var(--text)">
+        <option value="">— Επιλέξτε έργο —</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Τίτλος / Περιγραφή Προσφοράς *</label><input id="q_title" placeholder="π.χ. Υδραυλικές εγκαταστάσεις ισογείου"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Ημερομηνία Προσφοράς *</label><input type="date" id="q_date"></div>
+      <div class="form-group"><label>Ισχύς Προσφοράς έως</label><input type="date" id="q_valid_until"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Ποσό Προσφοράς (€) *</label><input type="number" id="q_amount" placeholder="0.00" step="0.01"></div>
+      <div class="form-group"><label>Κατηγορία Εργασίας</label>
+        <select id="q_category">
+          <option>Υλικά</option><option>Εργατικά</option><option>Υπεργολαβίες</option>
+          <option>Μηχανήματα / Εξοπλισμός</option><option>Μεταφορά</option>
+          <option>Αμοιβές Μηχανικών</option><option>Άλλο</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Αρ. Προσφοράς</label><input id="q_number" placeholder="π.χ. ΠΡ-2024-001"></div>
+    <div class="form-group"><label>Κατάσταση</label>
+      <select id="q_status">
+        <option value="pending">⏳ Εκκρεμεί Αξιολόγηση</option>
+        <option value="approved">✅ Εγκρίθηκε</option>
+        <option value="rejected">❌ Απορρίφθηκε</option>
+        <option value="partial">🔄 Μερική Αποδοχή</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Σημειώσεις</label><textarea id="q_notes" placeholder="Όροι, παρατηρήσεις..."></textarea></div>
+    <div class="form-actions">
+      <button class="btn btn-cancel" onclick="closeModal('quoteModal')">Ακύρωση</button>
+      <button class="btn btn-indigo" onclick="saveQuote()">💾 Αποθήκευση</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
