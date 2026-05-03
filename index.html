@@ -310,7 +310,7 @@
     <button class="btn-new-project" onclick="exportData()" title="Εξαγωγή δεδομένων σε αρχείο JSON">📤 Export</button>
     <button class="btn-new-project" onclick="document.getElementById('importFileInput').click()" title="Εισαγωγή δεδομένων από αρχείο JSON">📥 Import</button>
     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(this)">
-    <button id="gistSyncBtn" class="btn-new-project" onclick="gistSync()" title="Συγχρονισμός δεδομένων μεταξύ συσκευών">☁️ <span id="gistSyncLabel">Sync</span></button>
+    <button id="gistSyncBtn" class="btn-new-project" onclick="gistSync()" title="Συγχρονισμός δεδομένων">☁️ <span id="gistSyncLabel">Sync</span></button><button class="btn-new-project" onclick="openSyncSettings()" title="Ρυθμίσεις Sync" style="padding:7px 10px">⚙️</button>
   </div>
 </div>
 
@@ -3330,165 +3330,168 @@ function loadFortetsaTemplate(_fpProj) {
 
 
 
-// ===== GITHUB GIST SYNC =====
-function getGistToken() { return localStorage.getItem('ergokat_gist_token') || ''; }
+// ===== GIST SYNC =====
 const GIST_FILENAME = 'ergokat-data.json';
-let gistId = localStorage.getItem('ergokat_gist_id') || null;
-let lastSyncTime  = localStorage.getItem('ergokat_last_sync') || null;
 let syncInProgress = false;
 
-// Auto-sync every 5 minutes
-setInterval(() => { if (gistId && !syncInProgress) gistPush(false); }, 5 * 60 * 1000);
+function getGistToken() { return localStorage.getItem('ergokat_gist_token') || ''; }
+function getGistId()    { return localStorage.getItem('ergokat_gist_id')    || ''; }
 
 function setSyncLabel(text) {
   const lbl = document.getElementById('gistSyncLabel');
   const btn = document.getElementById('gistSyncBtn');
   if (lbl) lbl.textContent = text;
-  if (btn) btn.style.opacity = (text !== 'Sync') ? '0.6' : '1';
+  if (btn) btn.style.opacity = text !== 'Sync' ? '0.6' : '1';
 }
+
+function openSyncSettings() {
+  const token = getGistToken();
+  const gistId = getGistId();
+  const info = 'Gist Token: ' + (token ? token.substr(0,8)+'...' : 'ΔΕΝ ΕΧΕΙ ΟΡΙΣΤΕΙ') + '\nGist ID: ' + (gistId || 'ΔΕΝ ΕΧΕΙ ΟΡΙΣΤΕΙ');
+  const choice = prompt(info + '\n\nΒαλε νεο Token (ή Cancel για ακυρο):');
+  if (choice && choice.trim()) {
+    localStorage.setItem('ergokat_gist_token', choice.trim());
+    showToast('Token αποθηκευτηκε! ✅', 'green');
+  }
+}
+
+// Auto-sync every 3 min
+setInterval(() => {
+  if (getGistToken() && getGistId() && !syncInProgress) gistPush(false);
+}, 3 * 60 * 1000);
 
 async function gistSync() {
   if (syncInProgress) return;
-  // Ask for token if not set
   if (!getGistToken()) {
-    const t = prompt('Εισάγετε το GitHub Personal Access Token για Sync:');
-    if (!t) return;
-    localStorage.setItem('ergokat_gist_token', t);
-    location.reload();
+    openSyncSettings();
     return;
   }
+  const gistId = getGistId();
   if (!gistId) {
     await gistPush(true);
-  } else {
-    const lastStr = lastSyncTime ? new Date(lastSyncTime).toLocaleString('el-GR') : '';
-        const msg = 'Sync' + (lastStr ? ' (τελευταιο: ' + lastStr + ')' : '') + '\n\nOK = Αποθηκευση στο cloud\nCancel = Φορτωση απο cloud';
-    if (confirm(msg)) await gistPush(true);
-    else await gistPull();
+    return;
   }
+  const lastStr = localStorage.getItem('ergokat_last_sync');
+  const lastDate = lastStr ? new Date(lastStr).toLocaleString('el-GR') : 'ποτε';
+  const msg = 'Sync (τελευταιο: ' + lastDate + ')\n\nOK = Αποθηκευση στο cloud\nCancel = Φορτωση απο cloud';
+  if (confirm(msg)) await gistPush(true);
+  else await gistPull();
 }
 
 async function gistPush(showFeedback) {
+  const token = getGistToken();
+  if (!token) { showToast('Βαλε token στις ρυθμισεις (⚙️)', 'red'); return; }
   syncInProgress = true;
   setSyncLabel('Saving...');
   try {
+    const gistId = getGistId();
     const body = {
       description: 'ErgoKat ' + new Date().toLocaleString('el-GR'),
       public: false,
       files: { [GIST_FILENAME]: { content: JSON.stringify(appData) } }
     };
-    const url = gistId
-      ? 'https://api.github.com/gists/' + gistId
-      : 'https://api.github.com/gists';
+    const url    = gistId ? 'https://api.github.com/gists/' + gistId : 'https://api.github.com/gists';
     const method = gistId ? 'PATCH' : 'POST';
     const response = await fetch(url, {
       method,
-      headers: { 'Authorization': 'token ' + getGistToken(), 'Content-Type': 'application/json' },
+      headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (response.status === 409) {
-      // Conflict - try again with POST (create new gist)
-      const response2 = await fetch('https://api.github.com/gists', {
-        method: 'POST',
-        headers: { 'Authorization': 'token ' + getGistToken(), 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-      if (!response2.ok) throw new Error('HTTP ' + response2.status);
-      const data2 = await response2.json();
-      gistId = data2.id;
-      localStorage.setItem('ergokat_gist_id', gistId);
-      lastSyncTime = new Date().toISOString();
-      localStorage.setItem('ergokat_last_sync', lastSyncTime);
-      setSyncLabel('Sync');
-      if (showFeedback) showToast('Δεδομενα αποθηκευτηκαν! (νεο Gist: ' + gistId + ')', 'green');
-      syncInProgress = false;
+    if (response.status === 401) {
+      syncInProgress = false; setSyncLabel('Sync');
+      showToast('Token ληξε! Παταξε ⚙️ για να βαλεις νεο token', 'red');
       return;
     }
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    const data = await response.json();
-    gistId = data.id;
-    localStorage.setItem('ergokat_gist_id', gistId);
-    lastSyncTime = new Date().toISOString();
-    localStorage.setItem('ergokat_last_sync', lastSyncTime);
-    setSyncLabel('Sync');
-    if (showFeedback) {
-      showToast('Δεδομενα αποθηκευτηκαν στο cloud! ✅', 'green');
-      // Save gistId in a visible way for cross-device use
-      console.log('Gist ID:', gistId);
+    if (response.status === 409 || !response.ok) {
+      // Create new gist
+      const r2 = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!r2.ok) throw new Error('HTTP ' + r2.status);
+      const d2 = await r2.json();
+      localStorage.setItem('ergokat_gist_id', d2.id);
+    } else {
+      const data = await response.json();
+      localStorage.setItem('ergokat_gist_id', data.id);
     }
+    localStorage.setItem('ergokat_last_sync', new Date().toISOString());
+    setSyncLabel('Sync');
+    if (showFeedback) showToast('Αποθηκευτηκε στο cloud! ✅', 'green');
   } catch(e) {
     setSyncLabel('Sync');
-    if (showFeedback) showToast('Σφαλμα sync: ' + e.message, 'red');
+    if (showFeedback) showToast('Σφαλμα: ' + e.message, 'red');
   }
   syncInProgress = false;
 }
 
 async function gistPull() {
-  if (!getGistToken()) { showToast('Βαλε token πρωτα', 'red'); return; }
+  const token = getGistToken();
+  let gistId = getGistId();
+  if (!token) { showToast('Βαλε token στις ρυθμισεις (⚙️)', 'red'); return; }
   if (!gistId) {
-    const inputId = prompt('Δεν βρεθηκε Gist ID.\nΑντιγραψε το Gist ID απο αλλη συσκευη\n(φαινεται στο Console μετα απο Sync → OK):');
-    if (!inputId || !inputId.trim()) return;
-    gistId = inputId.trim();
+    const id = prompt('Gist ID (απο αλλη συσκευη που εκανες Sync → OK):');
+    if (!id || !id.trim()) return;
+    gistId = id.trim();
     localStorage.setItem('ergokat_gist_id', gistId);
   }
   syncInProgress = true;
   setSyncLabel('Loading...');
   try {
     const response = await fetch('https://api.github.com/gists/' + gistId, {
-      headers: { 'Authorization': 'token ' + getGistToken() }
+      headers: { 'Authorization': 'token ' + token }
     });
+    if (response.status === 401) {
+      syncInProgress = false; setSyncLabel('Sync');
+      showToast('Token ληξε! Παταξε ⚙️ για νεο token', 'red'); return;
+    }
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const data = await response.json();
-    const fileContent = data.files[GIST_FILENAME] ? data.files[GIST_FILENAME].content : null;
-    if (!fileContent) throw new Error('Δεν βρεθηκαν δεδομενα');
-    const parsed = JSON.parse(fileContent);
-    if (!parsed.projects || !Array.isArray(parsed.projects)) throw new Error('Μη εγκυρα δεδομενα');
-    if (!confirm('Φορτωση ' + parsed.projects.length + ' εργων απο cloud. Τα τρεχοντα δεδομενα θα αντικατασταθουν. Συνεχεια;')) {
+    const fc = data.files && data.files[GIST_FILENAME] ? data.files[GIST_FILENAME].content : null;
+    if (!fc) throw new Error('Δεν βρεθηκαν δεδομενα');
+    const parsed = JSON.parse(fc);
+    if (!parsed.projects) throw new Error('Μη εγκυρα δεδομενα');
+    if (!confirm('Φορτωση ' + parsed.projects.length + ' εργων. Συνεχεια;')) {
       setSyncLabel('Sync'); syncInProgress = false; return;
     }
     appData = parsed;
-    save();
-    refreshProjectSelect();
-    renderAll();
-    lastSyncTime = new Date().toISOString();
-    localStorage.setItem('ergokat_last_sync', lastSyncTime);
+    save(); refreshProjectSelect(); renderAll();
+    localStorage.setItem('ergokat_last_sync', new Date().toISOString());
     setSyncLabel('Sync');
-    showToast('Δεδομενα φορτωθηκαν απο το cloud!', 'green');
+    showToast('Φορτωθηκαν απο cloud! ✅', 'green');
   } catch(e) {
     setSyncLabel('Sync');
-    showToast('Σφαλμα φορτωσης: ' + e.message, 'red');
+    showToast('Σφαλμα: ' + e.message, 'red');
   }
   syncInProgress = false;
 }
 
 async function autoSyncOnStartup() {
-  if (!getGistToken() || !gistId) return;
+  const token = getGistToken();
+  const gistId = getGistId();
+  if (!token || !gistId) return;
   if (appData.projects && appData.projects.length > 0) {
-    // Has local data — silently push
-    await gistPush(false);
-    return;
+    await gistPush(false); return;
   }
-  // No local data — auto pull
   setSyncLabel('Loading...');
   try {
-    const response = await fetch('https://api.github.com/gists/' + gistId, {
-      headers: { 'Authorization': 'token ' + getGistToken() }
+    const r = await fetch('https://api.github.com/gists/' + gistId, {
+      headers: { 'Authorization': 'token ' + token }
     });
-    if (!response.ok) return;
-    const data = await response.json();
-    const fileContent = data.files[GIST_FILENAME] ? data.files[GIST_FILENAME].content : null;
-    if (!fileContent) return;
-    const parsed = JSON.parse(fileContent);
-    if (!parsed.projects) return;
+    if (!r.ok) { setSyncLabel('Sync'); return; }
+    const data = await r.json();
+    const fc = data.files && data.files[GIST_FILENAME] ? data.files[GIST_FILENAME].content : null;
+    if (!fc) { setSyncLabel('Sync'); return; }
+    const parsed = JSON.parse(fc);
+    if (!parsed.projects) { setSyncLabel('Sync'); return; }
     appData = parsed;
-    save();
-    refreshProjectSelect();
-    renderAll();
+    save(); refreshProjectSelect(); renderAll();
     setSyncLabel('Sync');
-    showToast('Δεδομενα φορτωθηκαν αυτοματα απο το cloud!', 'green');
-  } catch(e) {
-    setSyncLabel('Sync');
-  }
+    showToast('Δεδομενα φορτωθηκαν αυτοματα! ✅', 'green');
+  } catch(e) { setSyncLabel('Sync'); }
 }
+
 
 
 // ===== LIVE SEARCH HELPERS (update table without full re-render) =====
