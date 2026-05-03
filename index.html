@@ -3,7 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Διαχείριση Κατασκευαστικού Έργου</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogIkVyZ29LYXQgLSBcdTAzOTRcdTAzYjlcdTAzYjFcdTAzYzdcdTAzYjVcdTAzYWZcdTAzYzFcdTAzYjlcdTAzYzNcdTAzYjcgXHUwMzlhXHUwM2IxXHUwM2M0XHUwM2IxXHUwM2MzXHUwM2JhXHUwM2I1XHUwM2M1XHUwM2IxXHUwM2MzXHUwM2M0XHUwM2I5XHUwM2JhXHUwM2JmXHUwM2NkIFx1MDM4OFx1MDNjMVx1MDNiM1x1MDNiZlx1MDNjNSIsICJzaG9ydF9uYW1lIjogIkVyZ29LYXQiLCAic3RhcnRfdXJsIjogIi4vIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMxYTNhNWMiLCAidGhlbWVfY29sb3IiOiAiIzFhM2E1YyIsICJvcmllbnRhdGlvbiI6ICJhbnkiLCAiaWNvbnMiOiBbeyJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBpYUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNpSUhacFpYZENiM2c5SWpBZ01DQXhPVElnTVRreUlqNEtJQ0E4Y21WamRDQjNhV1IwYUQwaU1Ua3lJaUJvWldsbmFIUTlJakU1TWlJZ2NuZzlJak15SWlCbWFXeHNQU0lqTVdFellUVmpJaTgrQ2lBZ1BIUmxlSFFnZUQwaU5UQWxJaUI1UFNJMU1DVWlJR1J2YldsdVlXNTBMV0poYzJWc2FXNWxQU0pqWlc1MGNtRnNJaUIwWlhoMExXRnVZMmh2Y2owaWJXbGtaR3hsSWlCbWIyNTBMWE5wZW1VOUlqRXlNQ0krOEorUGwrKzRqend2ZEdWNGRENEtQQzl6ZG1jKyIsICJzaXplcyI6ICIxOTJ4MTkyIiwgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCJ9LCB7InNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSFpwWlhkQ2IzZzlJakFnTUNBeE9USWdNVGt5SWo0S0lDQThjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnY25nOUlqTXlJaUJtYVd4c1BTSWpNV0V6WVRWaklpOCtDaUFnUEhSbGVIUWdlRDBpTlRBbElpQjVQU0kxTUNVaUlHUnZiV2x1WVc1MExXSmhjMlZzYVc1bFBTSmpaVzUwY21Gc0lpQjBaWGgwTFdGdVkyaHZjajBpYldsa1pHeGxJaUJtYjI1MExYTnBlbVU5SWpFeU1DSSs4SitQbCsrNGp6d3ZkR1Y0ZEQ0S1BDOXpkbWMrIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIn1dfQ==">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ErgoKat">
+  <meta name="theme-color" content="#1a3a5c">
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjMyIiBmaWxsPSIjMWEzYTVjIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjEyMCI+8J+Pl++4jzwvdGV4dD4KPC9zdmc+">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj4KICA8cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjMyIiBmaWxsPSIjMWEzYTVjIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjEyMCI+8J+Pl++4jzwvdGV4dD4KPC9zdmc+">
+
+  <title>Διαχείριση Κατασκευαστικού Έργου</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js"></script>
 <style>
   :root {
@@ -186,8 +197,59 @@
   .forecast-bar { background: var(--border); border-radius: 8px; height: 20px; overflow: hidden; position: relative; margin-top: 6px; }
   .forecast-fill { height: 100%; border-radius: 8px; transition: width 0.5s; display: flex; align-items: center; padding-left: 8px; font-size: 10px; font-weight: 700; color: white; }
 
-  @media (max-width: 640px) {
-    .charts-row { grid-template-columns: 1fr; }
+  @media (max-width: 768px) {
+  /* Layout */
+  .charts-row { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .cal-grid-wrapper { grid-template-columns: 1fr; }
+  .summary-cards { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+  .supplier-grid { grid-template-columns: 1fr; }
+
+  /* Header */
+  .app-header { padding: 10px 14px; gap: 8px; }
+  .app-header h1 { font-size: 14px; }
+  .app-header p { display: none; }
+  .project-selector { width: 100%; margin-left: 0; }
+  .project-selector select { min-width: 0; flex: 1; font-size: 12px; }
+  .btn-new-project { font-size: 11px; padding: 6px 8px; }
+
+  /* Nav tabs - scrollable */
+  .nav { -webkit-overflow-scrolling: touch; }
+  .nav-btn { padding: 12px 14px; font-size: 12px; }
+
+  /* Content */
+  .content { padding: 12px 10px; }
+
+  /* Cards */
+  .card { padding: 14px; }
+  .card-value { font-size: 18px; }
+
+  /* Tables - horizontal scroll */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 500px; }
+  th, td { padding: 8px 10px; font-size: 12px; }
+
+  /* Modals */
+  .form-modal { padding: 18px 14px; width: 96%; max-height: 85vh; }
+  .form-modal h3 { font-size: 15px; }
+
+  /* Panels */
+  .panel { padding: 12px; }
+
+  /* Buttons */
+  .btn { padding: 8px 12px; font-size: 12px; }
+  .btn-sm { padding: 4px 8px; font-size: 10px; }
+
+  /* Section headers */
+  .section-header { flex-wrap: wrap; gap: 8px; }
+  .section-title { font-size: 14px; }
+
+  /* Summary cards - 1 column on very small screens */
+  @media (max-width: 400px) {
+    .summary-cards { grid-template-columns: 1fr !important; }
+    .nav-btn { padding: 10px 10px; font-size: 11px; }
+  }
+}
     .form-row, .form-row-3 { grid-template-columns: 1fr; }
     .cal-grid-wrapper { grid-template-columns: 1fr; }
     .supplier-grid { grid-template-columns: 1fr; }
@@ -3782,5 +3844,25 @@ setTimeout(autoSyncOnStartup, 500);
     </div>
   </div>
 </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        // Inline service worker
+        const swCode = `
+          const CACHE = 'ergokat-v1';
+          self.addEventListener('install', e => {
+            e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/ergo-app/', '/ergo-app/index.html'])));
+          });
+          self.addEventListener('fetch', e => {
+            e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+          });
+        `;
+        const blob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>
