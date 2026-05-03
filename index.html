@@ -198,57 +198,95 @@
   .forecast-fill { height: 100%; border-radius: 8px; transition: width 0.5s; display: flex; align-items: center; padding-left: 8px; font-size: 10px; font-weight: 700; color: white; }
 
   @media (max-width: 768px) {
-  /* Layout */
-  .charts-row { grid-template-columns: 1fr; }
-  .form-row { grid-template-columns: 1fr; }
-  .cal-grid-wrapper { grid-template-columns: 1fr; }
-  .summary-cards { grid-template-columns: 1fr 1fr !important; gap: 10px; }
-  .supplier-grid { grid-template-columns: 1fr; }
-
   /* Header */
-  .app-header { padding: 10px 14px; gap: 8px; }
-  .app-header h1 { font-size: 14px; }
+  .app-header { padding: 8px 10px; gap: 6px; flex-wrap: wrap; }
+  .app-header .logo { font-size: 20px; }
+  .app-header h1 { font-size: 13px; }
   .app-header p { display: none; }
-  .project-selector { width: 100%; margin-left: 0; }
-  .project-selector select { min-width: 0; flex: 1; font-size: 12px; }
-  .btn-new-project { font-size: 11px; padding: 6px 8px; }
+  .project-selector { 
+    margin-left: 0; width: 100%; 
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .project-selector select { 
+    min-width: 0; flex: 1; font-size: 11px; 
+    padding: 5px 6px;
+  }
+  .btn-new-project { 
+    font-size: 10px; padding: 5px 7px; 
+    white-space: nowrap;
+  }
 
-  /* Nav tabs - scrollable */
-  .nav { -webkit-overflow-scrolling: touch; }
-  .nav-btn { padding: 12px 14px; font-size: 12px; }
+  /* Nav - horizontal scroll, smaller */
+  .nav { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .nav-btn { 
+    padding: 10px 10px; font-size: 11px; 
+    white-space: nowrap; min-width: auto;
+  }
 
   /* Content */
-  .content { padding: 12px 10px; }
+  .content { padding: 10px 8px; }
 
-  /* Cards */
-  .card { padding: 14px; }
-  .card-value { font-size: 18px; }
+  /* Summary cards - 2 per row, compact */
+  .summary-cards { 
+    grid-template-columns: 1fr 1fr !important; 
+    gap: 8px; margin-bottom: 14px;
+  }
+  .card { padding: 10px 12px; }
+  .card-label { font-size: 9px; margin-bottom: 3px; }
+  .card-value { font-size: 16px; }
+  .card-sub { font-size: 10px; }
 
-  /* Tables - horizontal scroll */
+  /* Tables */
   .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { min-width: 500px; }
-  th, td { padding: 8px 10px; font-size: 12px; }
-
-  /* Modals */
-  .form-modal { padding: 18px 14px; width: 96%; max-height: 85vh; }
-  .form-modal h3 { font-size: 15px; }
-
-  /* Panels */
-  .panel { padding: 12px; }
-
-  /* Buttons */
-  .btn { padding: 8px 12px; font-size: 12px; }
-  .btn-sm { padding: 4px 8px; font-size: 10px; }
+  table { min-width: 480px; font-size: 11px; }
+  th { padding: 8px 8px; font-size: 10px; }
+  td { padding: 7px 8px; font-size: 11px; }
 
   /* Section headers */
-  .section-header { flex-wrap: wrap; gap: 8px; }
-  .section-title { font-size: 14px; }
-
-  /* Summary cards - 1 column on very small screens */
-  @media (max-width: 400px) {
-    .summary-cards { grid-template-columns: 1fr !important; }
-    .nav-btn { padding: 10px 10px; font-size: 11px; }
+  .section-header { 
+    flex-wrap: wrap; gap: 6px; 
+    margin-bottom: 10px;
   }
+  .section-title { font-size: 13px; }
+
+  /* Buttons */
+  .btn { padding: 7px 10px; font-size: 12px; }
+  .btn-sm { padding: 4px 7px; font-size: 10px; }
+
+  /* Modals - full screen on mobile */
+  .form-modal-bg { align-items: flex-end; }
+  .form-modal { 
+    width: 100%; max-width: 100%; 
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh; padding: 20px 14px;
+  }
+  .form-modal h3 { font-size: 15px; margin-bottom: 14px; }
+  .form-row { grid-template-columns: 1fr; gap: 8px; }
+  .form-group { margin-bottom: 10px; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 10px 10px; font-size: 14px;
+  }
+
+  /* Charts */
+  .charts-row { grid-template-columns: 1fr; gap: 12px; }
+  .chart-card { padding: 14px; }
+
+  /* Supplier grid */
+  .supplier-grid { grid-template-columns: 1fr; }
+
+  /* Calendar */
+  .cal-grid-wrapper { grid-template-columns: 1fr; }
+  .cal-cell { min-height: 48px; padding: 3px; }
+  .cal-event { font-size: 8px; }
+
+  /* Projects list */
+  .panel { padding: 10px; }
+}
+
+@media (max-width: 400px) {
+  .summary-cards { grid-template-columns: 1fr !important; }
+  .nav-btn { font-size: 10px; padding: 9px 8px; }
+  .app-header h1 { font-size: 12px; }
 }
     .form-row, .form-row-3 { grid-template-columns: 1fr; }
     .cal-grid-wrapper { grid-template-columns: 1fr; }
