@@ -3334,8 +3334,8 @@ function loadFortetsaTemplate(_fpProj) {
 const GIST_FILENAME = 'ergokat-data.json';
 let syncInProgress = false;
 
-function getGistToken() { return localStorage.getItem('ergokat_gist_token') || ''; }
-function getGistId()    { return localStorage.getItem('ergokat_gist_id')    || ''; }
+function getGistToken() { return localStorage.getItem('ergokat_gist_token') || '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'; }
+function getGistId()    { return localStorage.getItem('ergokat_gist_id')    || '3edc4dceb6e09bbc0e09f4c707e6c569'; }
 
 function setSyncLabel(text) {
   const lbl = document.getElementById('gistSyncLabel');
@@ -3934,4 +3934,92 @@ setTimeout(autoSyncOnStartup, 500);
     }
   </script>
 </body>
-</html>
+</html>// ===== GITHUB GIST SYNC =====
+const _GT = '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';
+const _GI = '3edc4dceb6e09bbc0e09f4c707e6c569';
+const _GF = 'ergokat-data.json';
+let _syncing = false;
+
+function setSyncLabel(t) {
+  const l = document.getElementById('gistSyncLabel');
+  const b = document.getElementById('gistSyncBtn');
+  if (l) l.textContent = t;
+  if (b) b.style.opacity = t !== 'Sync' ? '0.6' : '1';
+}
+
+setInterval(() => { if (!_syncing) _gistPush(false); }, 3*60*1000);
+
+async function gistSync() {
+  if (_syncing) return;
+  const last = localStorage.getItem('ergokat_last_sync');
+  const lastStr = last ? new Date(last).toLocaleString('el-GR') : 'ποτέ';
+  if (confirm('Τελευταίο sync: ' + lastStr + '\n\nOK = Αποθήκευση\nCancel = Φόρτωση')) {
+    await _gistPush(true);
+  } else {
+    await _gistPull();
+  }
+}
+
+async function _gistPush(show) {
+  _syncing = true; setSyncLabel('Saving...');
+  try {
+    const r = await fetch('https://api.github.com/gists/' + _GI, {
+      method: 'PATCH',
+      headers: { 'Authorization': 'token ' + _GT, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: { [_GF]: { content: JSON.stringify(appData) } } })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    localStorage.setItem('ergokat_last_sync', new Date().toISOString());
+    setSyncLabel('Sync');
+    if (show) showToast('Αποθηκεύτηκε! ✅', 'green');
+  } catch(e) {
+    setSyncLabel('Sync');
+    if (show) showToast('Σφάλμα: ' + e.message, 'red');
+  }
+  _syncing = false;
+}
+
+async function _gistPull() {
+  _syncing = true; setSyncLabel('Loading...');
+  try {
+    const r = await fetch('https://api.github.com/gists/' + _GI, {
+      headers: { 'Authorization': 'token ' + _GT }
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const txt = d.files[_GF] ? d.files[_GF].content : null;
+    if (!txt) throw new Error('Δεν βρέθηκαν δεδομένα');
+    const p = JSON.parse(txt);
+    if (!p.projects) throw new Error('Μη έγκυρα δεδομένα');
+    appData = p; save(); refreshProjectSelect(); renderAll();
+    localStorage.setItem('ergokat_last_sync', new Date().toISOString());
+    setSyncLabel('Sync');
+    showToast('Φορτώθηκε! ✅', 'green');
+  } catch(e) {
+    setSyncLabel('Sync');
+    showToast('Σφάλμα: ' + e.message, 'red');
+  }
+  _syncing = false;
+}
+
+async function autoSyncOnStartup() {
+  try {
+    const r = await fetch('https://api.github.com/gists/' + _GI, {
+      headers: { 'Authorization': 'token ' + _GT }
+    });
+    if (!r.ok) return;
+    const d = await r.json();
+    const txt = d.files[_GF] ? d.files[_GF].content : null;
+    if (!txt) return;
+    const p = JSON.parse(txt);
+    if (!p.projects) return;
+    // Only auto-load if local has less data
+    if (!appData.projects || appData.projects.length === 0) {
+      appData = p; save(); refreshProjectSelect(); renderAll();
+      showToast('Δεδομένα φορτώθηκαν αυτόματα! ✅', 'green');
+    }
+    setSyncLabel('Sync');
+  } catch(e) { setSyncLabel('Sync'); }
+}
+
+
