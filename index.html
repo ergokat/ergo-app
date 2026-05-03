@@ -3935,96 +3935,150 @@ setTimeout(autoSyncOnStartup, 500);
   </script>
 
 <script>
-// ===== GITHUB GIST SYNC =====
-const _GT = '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';
-const _GI = '3edc4dceb6e09bbc0e09f4c707e6c569';
-const _GF = 'ergokat-data.json';
-let _syncing = false;
+// ===== GOOGLE DRIVE SYNC =====
+const DRIVE_CLIENT_ID = '111726796794-tcpf9d1cvq7j0udqusklc4746tmbabio.apps.googleusercontent.com';
+const DRIVE_FILE_NAME  = 'ergokat-data.json';
+let driveToken = '';
+let driveSyncing = false;
 
-function setSyncLabel(t) {
-  const l = document.getElementById('gistSyncLabel');
-  const b = document.getElementById('gistSyncBtn');
+function setDriveSyncLabel(t) {
+  const l = document.getElementById('driveSyncLabel');
+  const b = document.getElementById('driveSyncBtn');
   if (l) l.textContent = t;
   if (b) b.style.opacity = t !== 'Sync' ? '0.6' : '1';
 }
 
-setInterval(() => { if (!_syncing) _gistPush(false); }, 3*60*1000);
+// Handle OAuth token from URL hash after redirect
+(function() {
+  if (window.location.hash && window.location.hash.includes('access_token')) {
+    const p = new URLSearchParams(window.location.hash.substring(1));
+    const token = p.get('access_token');
+    if (token) {
+      driveToken = token;
+      localStorage.setItem('ergokat_drive_token', token);
+      history.replaceState(null, '', window.location.pathname);
+      setTimeout(() => {
+        showToast('Συνδέθηκες με Google Drive! ✅', 'green');
+        const last = localStorage.getItem('ergokat_drive_sync');
+        const lastStr = last ? new Date(last).toLocaleString('el-GR') : 'ποτέ';
+        if (confirm('Τελευταίο sync: ' + lastStr + '\n\nOK = Αποθήκευση\nCancel = Φόρτωση')) {
+          drivePush();
+        } else {
+          drivePull();
+        }
+      }, 500);
+    }
+  }
+  // Restore token from storage
+  const saved = localStorage.getItem('ergokat_drive_token');
+  if (saved) driveToken = saved;
+})();
 
-async function gistSync() {
-  if (_syncing) return;
-  const last = localStorage.getItem('ergokat_last_sync');
+// Auto-sync every 3 minutes
+setInterval(() => {
+  if (driveToken && !driveSyncing) drivePush();
+}, 3 * 60 * 1000);
+
+async function driveSync() {
+  if (driveSyncing) return;
+  if (!driveToken) {
+    // Redirect to Google OAuth
+    const params = new URLSearchParams({
+      client_id:     DRIVE_CLIENT_ID,
+      redirect_uri:  window.location.origin + window.location.pathname,
+      response_type: 'token',
+      scope:         'https://www.googleapis.com/auth/drive.appdata',
+    });
+    window.location.href = 'https://accounts.google.com/o/oauth2/auth?' + params;
+    return;
+  }
+  const last = localStorage.getItem('ergokat_drive_sync');
   const lastStr = last ? new Date(last).toLocaleString('el-GR') : 'ποτέ';
   if (confirm('Τελευταίο sync: ' + lastStr + '\n\nOK = Αποθήκευση\nCancel = Φόρτωση')) {
-    await _gistPush(true);
+    await drivePush();
   } else {
-    await _gistPull();
+    await drivePull();
   }
 }
 
-async function _gistPush(show) {
-  _syncing = true; setSyncLabel('Saving...');
+async function drivePush() {
+  if (!driveToken) { await driveSync(); return; }
+  driveSyncing = true; setDriveSyncLabel('Saving...');
   try {
-    const r = await fetch('https://api.github.com/gists/' + _GI, {
-      method: 'PATCH',
-      headers: { 'Authorization': 'token ' + _GT, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ files: { [_GF]: { content: JSON.stringify(appData) } } })
+    const data = JSON.stringify(appData);
+    // Find existing file
+    const search = await fetch(
+      'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22' + DRIVE_FILE_NAME + '%22&fields=files(id)',
+      { headers: { Authorization: 'Bearer ' + driveToken } }
+    );
+    if (search.status === 401) { driveToken = ''; localStorage.removeItem('ergokat_drive_token'); setDriveSyncLabel('Sync'); driveSyncing = false; showToast('Η σύνδεση έληξε. Κάνε Sync ξανά.', 'orange'); return; }
+    const sd = await search.json();
+    const fileId = sd.files && sd.files[0] ? sd.files[0].id : null;
+    
+    const meta = { name: DRIVE_FILE_NAME, parents: fileId ? undefined : ['appDataFolder'] };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+    form.append('file', new Blob([data], { type: 'application/json' }));
+    
+    const url = fileId
+      ? 'https://www.googleapis.com/upload/drive/v3/files/' + fileId + '?uploadType=multipart'
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    
+    const res = await fetch(url, {
+      method: fileId ? 'PATCH' : 'POST',
+      headers: { Authorization: 'Bearer ' + driveToken },
+      body: form
     });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    localStorage.setItem('ergokat_last_sync', new Date().toISOString());
-    setSyncLabel('Sync');
-    if (show) showToast('Αποθηκεύτηκε! ✅', 'green');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    localStorage.setItem('ergokat_drive_sync', new Date().toISOString());
+    setDriveSyncLabel('Sync');
+    showToast('Αποθηκεύτηκε στο Drive! ✅', 'green');
   } catch(e) {
-    setSyncLabel('Sync');
-    if (show) showToast('Σφάλμα: ' + e.message, 'red');
-  }
-  _syncing = false;
-}
-
-async function _gistPull() {
-  _syncing = true; setSyncLabel('Loading...');
-  try {
-    const r = await fetch('https://api.github.com/gists/' + _GI, {
-      headers: { 'Authorization': 'token ' + _GT }
-    });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const d = await r.json();
-    const txt = d.files[_GF] ? d.files[_GF].content : null;
-    if (!txt) throw new Error('Δεν βρέθηκαν δεδομένα');
-    const p = JSON.parse(txt);
-    if (!p.projects) throw new Error('Μη έγκυρα δεδομένα');
-    appData = p; save(); refreshProjectSelect(); renderAll();
-    localStorage.setItem('ergokat_last_sync', new Date().toISOString());
-    setSyncLabel('Sync');
-    showToast('Φορτώθηκε! ✅', 'green');
-  } catch(e) {
-    setSyncLabel('Sync');
+    setDriveSyncLabel('Sync');
     showToast('Σφάλμα: ' + e.message, 'red');
   }
-  _syncing = false;
+  driveSyncing = false;
+}
+
+async function drivePull() {
+  if (!driveToken) { await driveSync(); return; }
+  driveSyncing = true; setDriveSyncLabel('Loading...');
+  try {
+    const search = await fetch(
+      'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%22' + DRIVE_FILE_NAME + '%22&fields=files(id)',
+      { headers: { Authorization: 'Bearer ' + driveToken } }
+    );
+    if (search.status === 401) { driveToken = ''; localStorage.removeItem('ergokat_drive_token'); setDriveSyncLabel('Sync'); driveSyncing = false; showToast('Η σύνδεση έληξε. Κάνε Sync ξανά.', 'orange'); return; }
+    const sd = await search.json();
+    const fileId = sd.files && sd.files[0] ? sd.files[0].id : null;
+    if (!fileId) throw new Error('Δεν βρέθηκε αρχείο στο Drive');
+    
+    const res = await fetch(
+      'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media',
+      { headers: { Authorization: 'Bearer ' + driveToken } }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const parsed = await res.json();
+    if (!parsed.projects) throw new Error('Μη έγκυρα δεδομένα');
+    
+    appData = parsed; save(); refreshProjectSelect(); renderAll();
+    localStorage.setItem('ergokat_drive_sync', new Date().toISOString());
+    setDriveSyncLabel('Sync');
+    showToast('Φορτώθηκε από Drive! ✅', 'green');
+  } catch(e) {
+    setDriveSyncLabel('Sync');
+    showToast('Σφάλμα: ' + e.message, 'red');
+  }
+  driveSyncing = false;
 }
 
 async function autoSyncOnStartup() {
-  try {
-    const r = await fetch('https://api.github.com/gists/' + _GI, {
-      headers: { 'Authorization': 'token ' + _GT }
-    });
-    if (!r.ok) return;
-    const d = await r.json();
-    const txt = d.files[_GF] ? d.files[_GF].content : null;
-    if (!txt) return;
-    const p = JSON.parse(txt);
-    if (!p.projects) return;
-    // Only auto-load if local has less data
-    if (!appData.projects || appData.projects.length === 0) {
-      appData = p; save(); refreshProjectSelect(); renderAll();
-      showToast('Δεδομένα φορτώθηκαν αυτόματα! ✅', 'green');
-    }
-    setSyncLabel('Sync');
-  } catch(e) { setSyncLabel('Sync'); }
+  if (!driveToken) return;
+  if (appData.projects && appData.projects.length > 0) {
+    drivePush(); return;
+  }
+  await drivePull();
 }
-
-
-
 </script>
 </body>
 </html>
